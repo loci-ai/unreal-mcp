@@ -42,8 +42,10 @@ public class UnrealMCP : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"Core",
 				"CoreUObject",
 				"Engine",
+				"InputCore",
 				"Slate",
 				"SlateCore",
 				"UnrealEd",
@@ -56,7 +58,14 @@ public class UnrealMCP : ModuleRules
 				"PropertyEditor",
 				"Projects",
 				"AssetRegistry",
-				"ContentBrowser"
+				"ContentBrowser",
+			    "InterchangeCore",
+    			"InterchangeEngine",
+    			"InterchangeImport",
+				"InterchangePipelines",
+				"Landscape",
+				"LandscapeEditor",
+				"Foliage"
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);

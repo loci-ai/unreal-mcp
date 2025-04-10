@@ -31,4 +31,4 @@ private:
 	TSharedPtr<FSocket> ListenerSocket;
 	TSharedPtr<FSocket> ClientSocket;
 	bool bRunning;
-}; 
+};
