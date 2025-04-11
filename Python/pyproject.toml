@@ -10,7 +10,11 @@ dependencies = [
   "uvicorn",
   "fastapi",
   "pydantic>=2.6.1",
-  "requests"
+  "requests",
+  "numpy",
+  "noise",
+  "boto3",
+  "pymongo"
 ]
 
 [build-system]
