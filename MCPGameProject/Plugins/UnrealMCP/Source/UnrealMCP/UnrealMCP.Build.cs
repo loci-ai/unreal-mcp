@@ -50,6 +50,7 @@ public class UnrealMCP : ModuleRules
 				"SlateCore",
 				"UnrealEd",
 				"EditorScriptingUtilities",
+				"PythonScriptPlugin",
 				"EditorSubsystem",
 				"Kismet",
 				"KismetCompiler",

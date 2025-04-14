@@ -6,7 +6,6 @@ A simple MCP server for interacting with Unreal Engine.
 
 import logging
 import socket
-import sys
 import json
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -28,7 +27,8 @@ logger = logging.getLogger("UnrealMCP")
 
 # Configuration
 UNREAL_HOST = "127.0.0.1"
-UNREAL_PORT = 55557
+UNREAL_CPP_PORT = 55557
+UNREAL_PYTHON_PORT = 9000
 
 
 class UnrealConnection:
@@ -39,7 +39,7 @@ class UnrealConnection:
         self.socket = None
         self.connected = False
 
-    def connect(self) -> bool:
+    def connect(self, port: int = UNREAL_CPP_PORT) -> bool:
         """Connect to the Unreal Engine instance."""
         try:
             # Close any existing socket
@@ -50,7 +50,7 @@ class UnrealConnection:
                     pass
                 self.socket = None
 
-            logger.info(f"Connecting to Unreal at {UNREAL_HOST}:{UNREAL_PORT}...")
+            logger.info(f"Connecting to Unreal at {UNREAL_HOST}:{port}...")
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.settimeout(5)  # 5 second timeout
 
@@ -62,7 +62,7 @@ class UnrealConnection:
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 65536)
 
-            self.socket.connect((UNREAL_HOST, UNREAL_PORT))
+            self.socket.connect((UNREAL_HOST, port))
             self.connected = True
             logger.info("Connected to Unreal Engine")
             return True
@@ -130,7 +130,7 @@ class UnrealConnection:
             raise
 
     def send_command(
-        self, command: str, params: Dict[str, Any] = None
+        self, command: str, params: Dict[str, Any] = None, port: int = UNREAL_CPP_PORT
     ) -> Optional[Dict[str, Any]]:
         """Send a command to Unreal Engine and get the response."""
         # Always reconnect for each command, since Unreal closes the connection after each command
@@ -143,7 +143,7 @@ class UnrealConnection:
             self.socket = None
             self.connected = False
 
-        if not self.connect():
+        if not self.connect(port):
             logger.error("Failed to connect to Unreal Engine for command")
             return None
 
@@ -211,13 +211,13 @@ class UnrealConnection:
 _unreal_connection: UnrealConnection = None
 
 
-def get_unreal_connection() -> Optional[UnrealConnection]:
+def get_unreal_connection(port: int = UNREAL_CPP_PORT) -> Optional[UnrealConnection]:
     """Get the connection to Unreal Engine."""
     global _unreal_connection
     try:
         if _unreal_connection is None:
             _unreal_connection = UnrealConnection()
-            if not _unreal_connection.connect():
+            if not _unreal_connection.connect(port):
                 logger.warning("Could not connect to Unreal Engine")
                 _unreal_connection = None
         else:
