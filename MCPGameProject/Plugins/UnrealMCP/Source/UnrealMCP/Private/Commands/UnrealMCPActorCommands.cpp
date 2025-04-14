@@ -33,6 +33,7 @@
 #include "LandscapeEdit.h"
 #include "LandscapeConfigHelper.h"
 #include "UObject/SoftObjectPath.h"
+#include "Containers/Ticker.h"
 
 
 FUnrealMCPActorCommands::FUnrealMCPActorCommands()
@@ -64,10 +65,6 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCommand(const FString& Co
     else if (CommandType == TEXT("get_actor_properties"))
     {
         return HandleGetActorProperties(Params);
-    }
-    else if (CommandType == TEXT("place_actor"))
-    {
-        return HandlePlaceActor(Params);
     }
     else if (CommandType == TEXT("create_terrain"))
     {
@@ -330,181 +327,6 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleGetActorProperties(const 
 
     // Always return detailed properties for this command
     return FUnrealMCPCommonUtils::ActorToJsonObject(TargetActor, true);
-}
-
-TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandlePlaceActor(const TSharedPtr<FJsonObject>& Params)
-{
-    FString AssetPath;
-    if (!Params->TryGetStringField(TEXT("asset_path"), AssetPath))
-    {
-        return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Missing 'asset_path' parameter"));
-    }
-
-    // Get actor name (required parameter)
-    FString ActorName;
-    if (!Params->TryGetStringField(TEXT("name"), ActorName))
-    {
-        return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Missing 'name' parameter"));
-    }
-
-    // Get optional transform parameters
-    FVector Location;
-    FRotator Rotation(0.0f, 0.0f, 0.0f);
-    FVector Scale(1.0f);
-
-    if (Params->HasField(TEXT("location")))
-    {
-        Location = FUnrealMCPCommonUtils::GetVectorFromJson(Params, TEXT("location"));
-    }
-    if (Params->HasField(TEXT("rotation")))
-    {
-        Rotation = FUnrealMCPCommonUtils::GetRotatorFromJson(Params, TEXT("rotation"));
-    }
-    if (Params->HasField(TEXT("scale")))
-    {
-        Scale = FUnrealMCPCommonUtils::GetVectorFromJson(Params, TEXT("scale"));
-    }
-
-    UWorld* World = GEditor->GetEditorWorldContext().World();
-    if (!World)
-    {
-        return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to get editor world"));
-    }
-
-    FString Extension = FPaths::GetExtension(AssetPath, false);
-
-    bool bIsGLTF = Extension.Equals(TEXT("glb"), ESearchCase::IgnoreCase) || Extension.Equals(TEXT("gltf"), ESearchCase::IgnoreCase);
-    bool bIsFBX = Extension.Equals(TEXT("fbx"), ESearchCase::IgnoreCase);
-
-    if (bIsFBX && GEngine)
-    {
-        GEngine->Exec(World, TEXT("Interchange.FeatureFlags.Import.FBX true"));
-    }
-
-
-    // Check if an actor with this name already exists
-    TArray<AActor*> AllActors;
-    UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), AllActors);
-    for (AActor* Actor : AllActors)
-    {
-        if (Actor && Actor->GetName() == ActorName)
-        {
-            return FUnrealMCPCommonUtils::CreateErrorResponse(FString::Printf(TEXT("Actor with name '%s' already exists"), *ActorName));
-        }
-    }
-
-    FString DestinationPath = TEXT("/Game/ImportedGLB/") + FPaths::GetBaseFilename(AssetPath);
-
-    const FString TransientPath = TEXT("/Interchange/Pipelines/Transient/");
-    const FString TransientPipelinePath = TransientPath + TEXT("MyAutomationPipeline");
-
-    UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-    if (!EditorAssetSubsystem)
-    {
-        return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to get Editor Asset Subsystem"));
-    }
-
-    EditorAssetSubsystem->DeleteDirectory(*TransientPath);
-
-    UObject* Pipeline = nullptr;
-    if (bIsGLTF)
-    {
-        Pipeline = EditorAssetSubsystem->DuplicateAsset(TEXT("/Interchange/Pipelines/DefaultGLTFAssetsPipeline"), *TransientPipelinePath);
-    }
-    else
-    {
-        Pipeline = EditorAssetSubsystem->DuplicateAsset(TEXT("/Interchange/Pipelines/DefaultAssetsPipeline"), *TransientPipelinePath);
-    }
-
-    if (UInterchangeGenericAssetsPipeline* GenericPipeline = Cast<UInterchangeGenericAssetsPipeline>(Pipeline))
-    {
-        GenericPipeline->MeshPipeline->bCombineStaticMeshes = true;
-
-        if (GenericPipeline->MaterialPipeline)
-        {
-            GenericPipeline->MaterialPipeline->bImportMaterials = false;
-
-            if (GenericPipeline->MaterialPipeline->TexturePipeline)
-            {
-                GenericPipeline->MaterialPipeline->TexturePipeline->bImportTextures = false;
-            }
-        }
-    }
-
-        // Create Source Data
-    UInterchangeSourceData* SourceData = UInterchangeManager::CreateSourceData(AssetPath);
-    FImportAssetParameters ImportParams;
-    ImportParams.bIsAutomated = true;
-
-    FSoftObjectPath SoftPipelinePath(TransientPipelinePath + TEXT(".MyAutomationPipeline"));
-    ImportParams.OverridePipelines.Add(SoftPipelinePath);
-
-    if (bIsGLTF)
-    {
-        ImportParams.OverridePipelines.Add(FSoftObjectPath(TEXT("/Interchange/Pipelines/DefaultGLTFPipeline")));
-    }
-
-    TArray<UObject*> ImportedObjects;
-    UInterchangeManager* InterchangeManager = UInterchangeManager::GetInterchangeManagerScripted();
-    if (!InterchangeManager)
-    {
-        return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to get Interchange Manager"));
-    }
-    bool imported = InterchangeManager->ImportAsset(DestinationPath, SourceData, ImportParams, ImportedObjects);
-    if (!imported || ImportedObjects.Num() == 0)
-    {
-        return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to import asset"));
-    }
-
-    EditorAssetSubsystem->DeleteDirectory(*TransientPath);
-
-    return FUnrealMCPCommonUtils::CreateSuccessResponse();
-
-    // AActor* Actor = nullptr;
-
-    // for (UObject* Asset : ImportedObjects)
-    // {        
-    //     if (UStaticMesh* StaticMesh = Cast<UStaticMesh>(Asset))
-    //     {
-    //         // Spawn the static mesh actor
-    //         FActorSpawnParameters SpawnParams;
-    //         SpawnParams.Name = FName(*StaticMesh->GetName());
-    //         SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-            
-    //         AStaticMeshActor* NewActor = World->SpawnActor<AStaticMeshActor>(Location, Rotation, SpawnParams);
-    //         if (NewActor)
-    //         {
-    //             NewActor->GetStaticMeshComponent()->SetStaticMesh(StaticMesh);
-    //             NewActor->SetActorScale3D(Scale);
-    //             Actor = NewActor;     
-    //         }
-    //     }
-    //     else if (USkeletalMesh* SkeletalMesh = Cast<USkeletalMesh>(Asset))
-    //     {
-    //         // Handle skeletal mesh
-    //         FActorSpawnParameters SpawnParams;
-    //         SpawnParams.Name = FName(*SkeletalMesh->GetName());
-    //         SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-            
-    //         ASkeletalMeshActor* NewActor = World->SpawnActor<ASkeletalMeshActor>(Location, Rotation, SpawnParams);
-    //         if (NewActor)
-    //         {
-    //             NewActor->GetSkeletalMeshComponent()->SetSkeletalMesh(SkeletalMesh);
-    //             NewActor->SetActorScale3D(Scale);
-    //             Actor = NewActor;
-    //         }
-    //     }
-    // }
-
-
-    // if (Actor)
-    // {
-    //     // Return the created actor's details
-    //     return FUnrealMCPCommonUtils::ActorToJsonObject(Actor, true);
-    // }
-
-    // return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to place actor"));
-
 }
 
 bool LoadRawHeightmapR16(const FString& FilePath, TArray<uint16>& OutHeightData)

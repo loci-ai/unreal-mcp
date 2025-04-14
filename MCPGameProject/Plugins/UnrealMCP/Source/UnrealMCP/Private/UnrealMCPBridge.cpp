@@ -217,7 +217,6 @@ FString UUnrealMCPBridge::ExecuteCommand(const FString& CommandType, const TShar
                      CommandType == TEXT("delete_actor") || 
                      CommandType == TEXT("set_actor_transform") ||
                      CommandType == TEXT("get_actor_properties") ||
-                     CommandType == TEXT("place_actor") ||
                      CommandType == TEXT("create_terrain"))
             {
                 ResultJson = ActorCommands->HandleCommand(CommandType, Params);

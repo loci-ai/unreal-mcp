@@ -220,10 +220,10 @@ def register_actor_tools(mcp: FastMCP):
         Returns:
             Dict containing the created actor's properties
         """
-        from unreal_mcp_server import get_unreal_connection
+        from unreal_mcp_server import get_unreal_connection, UNREAL_PYTHON_PORT
 
         try:
-            unreal = get_unreal_connection()
+            unreal = get_unreal_connection(port=UNREAL_PYTHON_PORT)
             params = {
                 "asset_path": asset_path,
                 "name": name,
@@ -233,7 +233,9 @@ def register_actor_tools(mcp: FastMCP):
                 params["rotation"] = rotation
             if scale is not None:
                 params["scale"] = scale
-            response = unreal.send_command("place_actor", params)
+            response = unreal.send_command(
+                "place_actor", params, port=UNREAL_PYTHON_PORT
+            )
             return response or {}
 
         except Exception as e:
@@ -246,22 +248,26 @@ def register_actor_tools(mcp: FastMCP):
     def create_terrain(
         ctx: Context,
         name: str,
-        base_scale: float = 250.0,
-        base_octaves: int = 3,
-        base_persistence: float = 0.4,
-        base_lacunarity: float = 2.0,
-        plateau_scale: float = 120.0,
-        plateau_octaves: int = 4,
-        plateau_threshold: float = 0.5,
-        plateau_height: float = 0.7,
-        plateau_softness: float = 0.2,
-        plateau_flatness: float = 2.0,
-        plateau_top_variation: float = 0.05,
-        erosion_strength: float = 0.08,
-        erosion_scale: float = 50.0,
-        enable_mesa: bool = False,
-        terracing_steps: int = 6,
-        seed: int = 42,
+        base_scale=250.0,
+        base_octaves=3,
+        base_persistence=0.4,
+        base_lacunarity=2.0,
+        plateau_scale=120.0,
+        plateau_octaves=4,
+        plateau_height=0.8,
+        plateau_flatness=3.0,
+        plateau_top_variation=0.05,
+        mountain_scale=90.0,
+        mountain_octaves=4,
+        mountain_height=1.0,
+        mountain_noise_type="ridged",  # or "perlin"
+        terracing_steps=0,
+        erosion_scale=60.0,
+        erosion_strength=0.05,
+        plateau_zone_bias=-0.3,
+        mountain_zone_bias=0.3,
+        zone_blend_softness=0.2,
+        seed=42,
     ):
         """Create a new terrain actor in the current level.
         Note: Does not delete existing terrain actors.
@@ -298,15 +304,19 @@ def register_actor_tools(mcp: FastMCP):
             base_lacunarity=base_lacunarity,
             plateau_scale=plateau_scale,
             plateau_octaves=plateau_octaves,
-            plateau_threshold=plateau_threshold,
             plateau_height=plateau_height,
-            plateau_softness=plateau_softness,
             plateau_flatness=plateau_flatness,
             plateau_top_variation=plateau_top_variation,
+            mountain_scale=mountain_scale,
+            mountain_octaves=mountain_octaves,
+            mountain_height=mountain_height,
+            mountain_noise_type=mountain_noise_type,
             terracing_steps=terracing_steps,
-            erosion_strength=erosion_strength,
             erosion_scale=erosion_scale,
-            enable_mesa=enable_mesa,
+            erosion_strength=erosion_strength,
+            plateau_zone_bias=plateau_zone_bias,
+            mountain_zone_bias=mountain_zone_bias,
+            zone_blend_softness=zone_blend_softness,
             seed=seed,
         )
 
