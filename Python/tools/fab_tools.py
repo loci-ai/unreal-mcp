@@ -13,7 +13,8 @@ logger = logging.getLogger("UnrealMCP")
 
 # -----------------------------------------
 # -----------------------------------------
-LOCI_API_KEY = os.environ["LOCI_API_KEY"]
+# LOCI_API_KEY = os.environ["LOCI_API_KEY"]
+LOCI_API_KEY="loci.N5OkjteKbxPi1dox"
 # -----------------------------------------
 # -----------------------------------------
 

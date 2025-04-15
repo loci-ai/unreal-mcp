@@ -6,7 +6,7 @@ import unreal
 from commands.commands import Commands
 
 UNREAL_HOST = "127.0.0.1"
-UNREAL_PORT = 9000
+UNREAL_PORT = 55558
 
 
 class MCPServer:
