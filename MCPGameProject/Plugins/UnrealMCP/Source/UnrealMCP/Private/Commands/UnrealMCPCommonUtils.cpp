@@ -426,7 +426,7 @@ TSharedPtr<FJsonValue> FUnrealMCPCommonUtils::ActorToJson(AActor* Actor)
     }
     
     TSharedPtr<FJsonObject> ActorObject = MakeShared<FJsonObject>();
-    ActorObject->SetStringField(TEXT("name"), Actor->GetName());
+    ActorObject->SetStringField(TEXT("name"), Actor->GetActorLabel());
     ActorObject->SetStringField(TEXT("class"), Actor->GetClass()->GetName());
     
     FVector Location = Actor->GetActorLocation();
@@ -461,7 +461,7 @@ TSharedPtr<FJsonObject> FUnrealMCPCommonUtils::ActorToJsonObject(AActor* Actor, 
     }
     
     TSharedPtr<FJsonObject> ActorObject = MakeShared<FJsonObject>();
-    ActorObject->SetStringField(TEXT("name"), Actor->GetName());
+    ActorObject->SetStringField(TEXT("name"), Actor->GetActorLabel());
     ActorObject->SetStringField(TEXT("class"), Actor->GetClass()->GetName());
     
     FVector Location = Actor->GetActorLocation();

@@ -75,7 +75,11 @@ from commands.utils import _return_registry, Responses
 {func_def}
 args = json.loads('''{args_json}''')
 kwargs = json.loads('''{kwargs_json}''')
-_return_registry['{task_id}'] = {func.__name__}(*args, **kwargs)
+try:
+    _return_registry['{task_id}'] = {func.__name__}(*args, **kwargs)
+except Exception as e:
+    unreal.log_warning(f"Error in function {func.__name__}:" + repr(e))
+    _return_registry['{task_id}'] = Responses.create_error_response(repr(e))
 """
         # Dedent the entire code block to ensure proper formatting
         python_code = python_code

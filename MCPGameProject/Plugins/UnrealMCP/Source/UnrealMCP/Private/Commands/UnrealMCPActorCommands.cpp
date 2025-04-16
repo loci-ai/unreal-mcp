@@ -168,14 +168,13 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateActor(const TShared
     UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), AllActors);
     for (AActor* Actor : AllActors)
     {
-        if (Actor && Actor->GetName() == ActorName)
+        if (Actor && Actor->GetActorLabel() == ActorName)
         {
             return FUnrealMCPCommonUtils::CreateErrorResponse(FString::Printf(TEXT("Actor with name '%s' already exists"), *ActorName));
         }
     }
 
     FActorSpawnParameters SpawnParams;
-    SpawnParams.Name = *ActorName;
 
     if (ActorType == TEXT("StaticMeshActor"))
     {
@@ -208,6 +207,7 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateActor(const TShared
         FTransform Transform = NewActor->GetTransform();
         Transform.SetScale3D(Scale);
         NewActor->SetActorTransform(Transform);
+        NewActor->SetActorLabel(ActorName);
 
         // Return the created actor's details
         return FUnrealMCPCommonUtils::ActorToJsonObject(NewActor, true);
@@ -229,7 +229,7 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleDeleteActor(const TShared
     
     for (AActor* Actor : AllActors)
     {
-        if (Actor && Actor->GetName() == ActorName)
+        if (Actor && Actor->GetActorLabel() == ActorName)
         {
             // Store actor info before deletion for the response
             TSharedPtr<FJsonObject> ActorInfo = FUnrealMCPCommonUtils::ActorToJsonObject(Actor);
@@ -262,7 +262,7 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleSetActorTransform(const T
     
     for (AActor* Actor : AllActors)
     {
-        if (Actor && Actor->GetName() == ActorName)
+        if (Actor && Actor->GetActorLabel() == ActorName)
         {
             TargetActor = Actor;
             break;
@@ -417,18 +417,19 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateTerrain(const TShar
 
     // Set transform - position at origin with scale
     FTransform LandscapeTransform = FTransform::Identity;
-    LandscapeTransform.SetScale3D(FVector(20.0f, 20.0f, 5.0f));
+    LandscapeTransform.SetLocation(FVector(0.0f, 0.0f, 0.0f));
+    LandscapeTransform.SetScale3D(FVector(1.0f, 1.0f, 1.0f));
     Landscape->SetActorTransform(LandscapeTransform);
 
     // Import the height data into the landscape
     Landscape->Import(
         FGuid::NewGuid(), 
         0, 0, 
-        SizeX - 1, SizeY - 1, 
-        SectionsPerComponent, 
+        SizeX - 1, SizeY - 1,
+        SectionsPerComponent,
         QuadsPerComponent, 
         HeightDataPerLayers, 
-        nullptr, 
+        nullptr,
         MaterialLayerDataPerLayers, 
         ELandscapeImportAlphamapType::Additive
     );

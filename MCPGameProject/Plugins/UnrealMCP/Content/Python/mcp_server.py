@@ -4,9 +4,10 @@ import json
 import unreal
 
 from commands.commands import Commands
+from commands.utils import Responses
 
 UNREAL_HOST = "127.0.0.1"
-UNREAL_PORT = 9000
+UNREAL_PORT = 55558
 
 
 class MCPServer:
@@ -58,7 +59,7 @@ class MCPServer:
             # Execute the Unreal function
             result = self.execute_function(function_name, arguments)
 
-            client_socket.sendall(json.dumps({"result": result}).encode("utf-8"))
+            client_socket.sendall(json.dumps(result).encode("utf-8"))
 
         except Exception as e:
             unreal.log_error(f"Error in client loop: {e}")
@@ -75,4 +76,4 @@ class MCPServer:
             else:
                 return f"Function '{function_name}' not found."
         except Exception as e:
-            return str(e)
+            return {"error": str(e)}

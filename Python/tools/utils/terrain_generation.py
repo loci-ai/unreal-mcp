@@ -7,7 +7,7 @@ import tempfile
 logger = logging.getLogger("UnrealMCP")
 
 
-def generate_custom_heightmap(
+def create_heightmap(
     width: int = 1009,
     height: int = 1009,
     base_scale: float = 250.0,
@@ -27,7 +27,7 @@ def generate_custom_heightmap(
     enable_mesa: bool = False,
     seed: int = 42,
 ):
-    data = np.zeros((height, width), dtype=np.uint16)
+    data = np.zeros((height, width), dtype=np.float32)
 
     for y in range(height):
         for x in range(width):
@@ -113,9 +113,14 @@ def generate_custom_heightmap(
 
             # --- Final clamp + write ---
             total_height = np.clip(total_height, 0.0, 1.0)
-            data[y, x] = int(total_height * 65535)
+            data[y, x] = total_height
+
+    data = data - np.min(data)
+    data = ((data * 32767) + 32768).astype(np.uint16)
 
     logger.info(f"First 10 values of heightmap data: {data.flatten()[:10]}")
+    logger.info("Minimum heightmap value: %d", data.min())
+    logger.info("Maximum heightmap value: %d", data.max())
 
     path = tempfile.mkstemp(suffix=".r16")[1]
     data.tofile(path)
