@@ -140,9 +140,16 @@ class ActorCommands:
             if isinstance(loaded, (unreal.StaticMesh, unreal.SkeletalMesh)):
                 mesh_assets.append(loaded)
 
+        if not mesh_assets:
+            raise ValueError("No valid mesh assets found in provided paths.")
+
+        unreal.log(f"{len(locations)}")
+        unreal.log(f"{len(rotations)}")
+        unreal.log(f"{len(scales)}")
+
+        placed_actors = 0
+
         for i, (loc, rot, scale) in enumerate(zip(locations, rotations, scales)):
-            if not mesh_assets:
-                raise ValueError("No valid mesh assets found in provided paths.")
             mesh_asset = random.choice(mesh_assets)
             bounds = mesh_asset.get_bounding_box()
             max_dim = max(
@@ -155,7 +162,7 @@ class ActorCommands:
             rot_v = unreal.Rotator(0.0, 0.0, rot)
             scale_v = unreal.Vector(scale_, scale_, scale_)
 
-            hit_result = unreal.SystemLibrary.line_trace_single(
+            hit_results = unreal.SystemLibrary.line_trace_multi(
                 unreal.EditorLevelLibrary.get_editor_world(),
                 start=unreal.Vector(loc[0], loc[1], 2000),
                 end=unreal.Vector(loc[0], loc[1], -2000),
@@ -165,8 +172,15 @@ class ActorCommands:
                 draw_debug_type=unreal.DrawDebugTrace.NONE,
                 ignore_self=True,
             )
-            if hit_result:
-                hit_result = hit_result.to_tuple()
+            if not hit_results or any(
+                [
+                    h.to_tuple()[9].get_class().get_name() != "Landscape"
+                    for h in hit_results
+                ]
+            ):
+                continue
+            else:
+                hit_result = hit_results[0].to_tuple()
                 loc_v = hit_result[4]
 
             # Determine the actor class
@@ -193,6 +207,8 @@ class ActorCommands:
             elif isinstance(actor, unreal.SkeletalMeshActor):
                 actor.skeletal_mesh_component.set_skeletal_mesh(mesh_asset)
 
+            placed_actors += 1
+
         return Responses.create_success_response(
-            {"message": f"Placed {len(locations)} actors with prefix: {prefix_name}"}
+            {"message": f"Placed {placed_actors} actors with prefix: {prefix_name}"}
         )

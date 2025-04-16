@@ -1,7 +1,8 @@
 import logging
 import numpy as np
 from noise import pnoise2, snoise2
-import tempfile
+
+from .constants import HEIGHTMAP_PATH
 
 
 logger = logging.getLogger("UnrealMCP")
@@ -122,6 +123,6 @@ def create_heightmap(
     logger.info("Minimum heightmap value: %d", data.min())
     logger.info("Maximum heightmap value: %d", data.max())
 
-    path = tempfile.mkstemp(suffix=".r16")[1]
+    path = HEIGHTMAP_PATH.as_posix()
     data.tofile(path)
     return path

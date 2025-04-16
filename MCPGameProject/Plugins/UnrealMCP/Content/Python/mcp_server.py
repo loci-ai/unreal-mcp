@@ -4,7 +4,6 @@ import json
 import unreal
 
 from commands.commands import Commands
-from commands.utils import Responses
 
 UNREAL_HOST = "127.0.0.1"
 UNREAL_PORT = 55558
@@ -16,7 +15,7 @@ class MCPServer:
     This server listens for incoming connections and executes functions
     """
 
-    def __init__(self, host=UNREAL_HOST, port=UNREAL_PORT, buffer_size=4096):
+    def __init__(self, host=UNREAL_HOST, port=UNREAL_PORT, buffer_size=65536):
         self.host = host
         self.port = port
         self.buffer_size = buffer_size
@@ -30,8 +29,12 @@ class MCPServer:
         self.server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         # Optional tuning if expecting big payloads:
-        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)
-        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 65536)
+        self.server_socket.setsockopt(
+            socket.SOL_SOCKET, socket.SO_RCVBUF, self.buffer_size
+        )
+        self.server_socket.setsockopt(
+            socket.SOL_SOCKET, socket.SO_SNDBUF, self.buffer_size
+        )
 
         self.server_socket.bind((self.host, self.port))
         self.server_socket.listen(5)
@@ -62,8 +65,8 @@ class MCPServer:
             client_socket.sendall(json.dumps(result).encode("utf-8"))
 
         except Exception as e:
-            unreal.log_error(f"Error in client loop: {e}")
-            client_socket.sendall(json.dumps({"error": str(e)}).encode("utf-8"))
+            unreal.log_error(f"Error in client loop: {repr(e)}")
+            client_socket.sendall(json.dumps({"error": repr(e)}).encode("utf-8"))
         finally:
             client_socket.close()
 
@@ -76,4 +79,4 @@ class MCPServer:
             else:
                 return f"Function '{function_name}' not found."
         except Exception as e:
-            return {"error": str(e)}
+            return {"error": repr(e)}
