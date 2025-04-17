@@ -84,7 +84,10 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleGetActorsInLevel(const TS
     {
         if (Actor)
         {
-            ActorArray.Add(FUnrealMCPCommonUtils::ActorToJson(Actor));
+            TSharedPtr<FJsonObject> ActorObject = MakeShared<FJsonObject>();
+            ActorObject->SetStringField(TEXT("name"), Actor->GetActorLabel());
+            ActorObject->SetStringField(TEXT("class"), Actor->GetClass()->GetName());
+            ActorArray.Add(MakeShared<FJsonValueObject>(ActorObject));
         }
     }
     

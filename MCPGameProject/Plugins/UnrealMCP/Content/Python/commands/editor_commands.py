@@ -1,13 +1,12 @@
 import unreal
 from typing import Any
 
-from commands.utils import Responses, run_on_main_thread
+from commands.utils import Responses
 
 
 class EditorCommands:
 
     @staticmethod
-    @run_on_main_thread
     def import_asset(
         asset_path: str, asset_category: str | None = None
     ) -> dict[str, Any]:

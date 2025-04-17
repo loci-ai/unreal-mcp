@@ -82,7 +82,7 @@ class UnrealConnection:
         self.socket = None
         self.connected = False
 
-    def receive_full_response(self, sock, buffer_size=4096) -> bytes:
+    def receive_full_response(self, sock, buffer_size=65536) -> bytes:
         """Receive a complete response from Unreal, handling chunked data."""
         chunks = []
         sock.settimeout(30)  # 30 second timeout

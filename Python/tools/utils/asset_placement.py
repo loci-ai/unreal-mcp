@@ -11,20 +11,20 @@ logger = logging.getLogger("UnrealMCP")
 def generate_rock_locations(num_assets):
     return generate_asset_locations(
         num_assets=num_assets,
-        min_distance=3.0,
-        gradient_threshold=0.9,
-        cluster_strength=40.0,
-        height_influence=0.8,
+        min_distance=5.0,
+        gradient_threshold=20.0,
+        cluster_strength=20.0,
+        height_influence=0.0,
     )
 
 
 def generate_tree_locations(num_assets):
     return generate_asset_locations(
         num_assets=num_assets,
-        min_distance=3.0,
-        gradient_threshold=0.7,
-        cluster_strength=5.0,
-        height_influence=0.3,
+        min_distance=5.0,
+        gradient_threshold=20.0,
+        cluster_strength=10.0,
+        height_influence=0.15,
     )
 
 

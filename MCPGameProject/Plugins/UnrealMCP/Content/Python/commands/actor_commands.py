@@ -1,13 +1,12 @@
 import unreal
 from typing import Any
 
-from .utils import Responses, run_on_main_thread
+from .utils import Responses
 
 
 class ActorCommands:
 
     @staticmethod
-    @run_on_main_thread
     def place_actor(
         asset_path: str,
         name: str,
@@ -102,7 +101,6 @@ class ActorCommands:
         return Responses.actor_to_json(actor)
 
     @staticmethod
-    @run_on_main_thread
     def place_multiple_actors(
         asset_path: str,
         prefix_name: str,

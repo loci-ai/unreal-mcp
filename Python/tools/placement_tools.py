@@ -30,7 +30,7 @@ def register_placement_tools(mcp: FastMCP):
         """Place an actor in the level. The mesh used will first be scaled
          down to unit cube, and then scaled up to the specified scale.
         The landscape size is assumed to be 1009x1009 with . An appropriate scale
-        for a tree could be around 0.5, while a rock could be around 0.3.
+        for a tree could be around 0.5, while a rock could be around 0.2.
         Uses line trace to adjust the Z coordinate of the actor to the landscape.
         Args:
             ctx: The MCP context
@@ -83,7 +83,7 @@ def register_placement_tools(mcp: FastMCP):
         Landscape size is assumed to be 1009x1009. Any mesh used will first
         be scaled down to unit cube, and then scaled up to the specified scale.
         An appropriate scale for a tree could be around 0.5, while a rock
-        could be around 0.3. Uses line trace to adjust the Z coordinate of the
+        could be around 0.2. Uses line trace to adjust the Z coordinate of the
         actors to the landscape.
         The final number of actors placed may be less than the number of locations
         provided, if a collision may occur with an existing actor.
@@ -192,7 +192,7 @@ def register_placement_tools(mcp: FastMCP):
             unreal = get_unreal_connection(port=UNREAL_PYTHON_PORT)
             locations = generate_rock_locations(num_assets)
             rotations = [random.uniform(0.0, 360.0) for _ in range(len(locations))]
-            scales = [random.uniform(0.25, 0.4) for _ in range(len(locations))]
+            scales = [random.uniform(0.15, 0.25) for _ in range(len(locations))]
 
             params = {
                 "asset_path": asset_path,
