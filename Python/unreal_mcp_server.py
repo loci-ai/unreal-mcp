@@ -277,10 +277,11 @@ mcp = FastMCP(
 
 # Import and register tools
 from tools.actor_tools import register_actor_tools
-from tools.editor_tools import register_editor_tools
 from tools.blueprint_tools import register_blueprint_tools
-from tools.node_tools import register_blueprint_node_tools
+from tools.editor_tools import register_editor_tools
 from tools.fab_tools import register_fab_tools
+from tools.genai_tools import register_genai_tools
+from tools.node_tools import register_blueprint_node_tools
 from tools.placement_tools import register_placement_tools
 
 # Register tools
@@ -290,6 +291,7 @@ register_blueprint_tools(mcp)
 register_blueprint_node_tools(mcp)
 register_fab_tools(mcp)
 register_placement_tools(mcp)
+register_genai_tools(mcp)
 
 
 @mcp.prompt()

@@ -1,21 +1,17 @@
 import logging
 import os
-from pathlib import Path
 import tempfile
+from pathlib import Path
 from urllib.parse import urlparse
+
 import boto3
 import requests
-
-from mcp.server.fastmcp import FastMCP, Context
+from env import LOCI_API_KEY
+from mcp.server.fastmcp import Context, FastMCP
 
 # Get logger
 logger = logging.getLogger("UnrealMCP")
 
-# -----------------------------------------
-# -----------------------------------------
-LOCI_API_KEY = os.environ["LOCI_API_KEY"]
-# -----------------------------------------
-# -----------------------------------------
 
 S3_CLIENT = boto3.client("s3")
 MAX_NUM_RESULTS = 5
