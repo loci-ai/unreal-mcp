@@ -1,6 +1,9 @@
 # Unreal MCP
 Python/unreal_mcp.log
 
+# data
+data/
+
 # AI-related files
 .cursorrules
 .cursorignore

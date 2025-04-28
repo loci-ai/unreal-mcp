@@ -1,32 +1,34 @@
+import logging
 import numpy as np
 from scipy.ndimage import gaussian_filter
 from scipy.spatial import KDTree
 
+from .constants import HEIGHTMAP_PATH
 
-def generate_rock_locations(heightmap, num_assets):
+logger = logging.getLogger("UnrealMCP")
+
+
+def generate_rock_locations(num_assets):
     return generate_asset_locations(
-        heightmap=heightmap,
         num_assets=num_assets,
-        min_distance=3.0,
-        gradient_threshold=0.1,
-        cluster_strength=40.0,
-        height_influence=0.8,
+        min_distance=5.0,
+        gradient_threshold=20.0,
+        cluster_strength=20.0,
+        height_influence=0.0,
     )
 
 
-def generate_tree_locations(heightmap, num_assets):
+def generate_tree_locations(num_assets):
     return generate_asset_locations(
-        heightmap=heightmap,
         num_assets=num_assets,
         min_distance=5.0,
-        gradient_threshold=0.2,
-        cluster_strength=0.0,
-        height_influence=0.3,
+        gradient_threshold=20.0,
+        cluster_strength=10.0,
+        height_influence=0.15,
     )
 
 
 def generate_asset_locations(
-    heightmap: np.ndarray,
     num_assets: int = 30,
     min_distance: float = 5.0,
     gradient_threshold: float = 10.0,
@@ -50,6 +52,11 @@ def generate_asset_locations(
     Returns:
         list of (x, y, z) tuples representing asset positions.
     """
+
+    # Load heightmap
+    heightmap = np.fromfile(HEIGHTMAP_PATH, dtype=np.uint16)
+    heightmap = heightmap.reshape(1009, 1009)
+
     size_y, size_x = heightmap.shape
     assert size_y == size_x, "Heightmap must be square."
     size = size_y
@@ -102,6 +109,7 @@ def generate_asset_locations(
         x, y = int(p[0]), int(p[1])
         z = heightmap[y, x]
         jitter = np.random.uniform(0, max_z_jitter)
-        result.append((x, y, z - jitter))
+        result.append([float(x), float(y), z - jitter])
 
+    logger.info(f"Generated {len(result)} asset locations.")
     return result

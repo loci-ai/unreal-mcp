@@ -14,7 +14,9 @@ dependencies = [
   "numpy",
   "noise",
   "boto3",
-  "pymongo"
+  "scipy",
+  "dotenv",
+  "pillow"
 ]
 
 [build-system]

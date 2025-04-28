@@ -1,12 +1,46 @@
 import socket
 import threading
+import uuid
 import json
+from typing import Any
+
 import unreal
 
 from commands.commands import Commands
+from commands.utils import Responses
 
 UNREAL_HOST = "127.0.0.1"
 UNREAL_PORT = 55558
+
+
+class Runner:
+    """
+    This class is responsible for executing commands on the main thread.
+    """
+
+    _return_registry = {}
+
+    @classmethod
+    def run_on_main_thread(cls, message: str, task_id: str):
+        try:
+            command = json.loads(message)
+            function_name = command.get("type")
+            arguments = command.get("params", {})
+            function = getattr(Commands, function_name, None)
+            cls._return_registry[task_id] = function(**arguments)
+        except Exception as e:
+            unreal.log_warning(repr(e))
+            cls._return_registry[task_id] = Responses.create_error_response(repr(e))
+
+    @classmethod
+    def run(cls, message: str) -> dict[str, Any]:
+        task_id = str(uuid.uuid4())
+        python_code = f"Runner.run_on_main_thread('''{message}''', '{task_id}')"
+        unreal.PythonExtension.launch_script_on_game_thread(python_code)
+        while task_id not in cls._return_registry:
+            threading.Event().wait(0.01)
+
+        return cls._return_registry.pop(task_id)
 
 
 class MCPServer:
@@ -15,7 +49,7 @@ class MCPServer:
     This server listens for incoming connections and executes functions
     """
 
-    def __init__(self, host=UNREAL_HOST, port=UNREAL_PORT, buffer_size=4096):
+    def __init__(self, host=UNREAL_HOST, port=UNREAL_PORT, buffer_size=65536):
         self.host = host
         self.port = port
         self.buffer_size = buffer_size
@@ -29,8 +63,12 @@ class MCPServer:
         self.server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         # Optional tuning if expecting big payloads:
-        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)
-        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 65536)
+        self.server_socket.setsockopt(
+            socket.SOL_SOCKET, socket.SO_RCVBUF, self.buffer_size
+        )
+        self.server_socket.setsockopt(
+            socket.SOL_SOCKET, socket.SO_SNDBUF, self.buffer_size
+        )
 
         self.server_socket.bind((self.host, self.port))
         self.server_socket.listen(5)
@@ -47,32 +85,17 @@ class MCPServer:
 
     def handle_client(self, client_socket: socket.socket):
         try:
-            data = client_socket.recv(self.buffer_size)
-            if not data:
+            message = client_socket.recv(self.buffer_size)
+            if not message:
                 return  # Client disconnected
 
-            message = json.loads(data.decode("utf-8"))
-            function_name = message.get("type")
-            arguments = message.get("params", {})
-
             # Execute the Unreal function
-            result = self.execute_function(function_name, arguments)
+            result = Runner.run(message.decode("utf-8"))
 
-            client_socket.sendall(json.dumps({"result": result}).encode("utf-8"))
+            client_socket.sendall(json.dumps(result).encode("utf-8"))
 
         except Exception as e:
-            unreal.log_error(f"Error in client loop: {e}")
-            client_socket.sendall(json.dumps({"error": str(e)}).encode("utf-8"))
+            unreal.log_error(f"Error in client loop: {repr(e)}")
+            client_socket.sendall(json.dumps({"error": repr(e)}).encode("utf-8"))
         finally:
             client_socket.close()
-
-    def execute_function(self, function_name, arguments):
-        unreal.log(f"Executing function: {function_name} with arguments: {arguments}")
-        try:
-            func = getattr(Commands, function_name, None)
-            if callable(func):
-                return func(**arguments)
-            else:
-                return f"Function '{function_name}' not found."
-        except Exception as e:
-            return str(e)

@@ -8,7 +8,7 @@ import logging
 from typing import Dict, List, Any, Optional
 from mcp.server.fastmcp import FastMCP, Context
 
-from .utils.terrain_generation import generate_custom_heightmap
+from .utils.terrain_generation import create_heightmap
 
 # Get logger
 logger = logging.getLogger("UnrealMCP")
@@ -85,7 +85,7 @@ def register_actor_tools(mcp: FastMCP):
             type: The type of actor to create (e.g. StaticMeshActor, PointLight)
             location: The [x, y, z] world location to spawn at
             rotation: The [pitch, yaw, roll] rotation in degrees
-            scale: The [x, y, z] scale to apply
+            scale: The [x, y, z] scale to apply. The
 
         Returns:
             Dict containing the created actor's properties
@@ -200,51 +200,6 @@ def register_actor_tools(mcp: FastMCP):
             return {}
 
     @mcp.tool()
-    def place_actor(
-        ctx: Context,
-        asset_path: str,
-        name: str,
-        location: List[float],
-        rotation: Optional[List[float]] = None,
-        scale: Optional[List[float]] = None,
-    ):
-        """Place an actor in the level.
-        Args:
-            ctx: The MCP context
-            asset_path: The path to the asset to use
-            name: The name to give the new actor (must be unique)
-            location: The [x, y, z] world location to spawn at
-            rotation [Optional]: The [pitch, yaw, roll] rotation in degrees
-            scale [Optional]: The [s] scale to apply (uniformly applied to all axes)
-
-        Returns:
-            Dict containing the created actor's properties
-        """
-        from unreal_mcp_server import get_unreal_connection, UNREAL_PYTHON_PORT
-
-        try:
-            unreal = get_unreal_connection(port=UNREAL_PYTHON_PORT)
-            params = {
-                "asset_path": asset_path,
-                "name": name,
-                "location": location,
-            }
-            if rotation is not None:
-                params["rotation"] = rotation
-            if scale is not None:
-                params["scale"] = scale
-            response = unreal.send_command(
-                "place_actor", params, port=UNREAL_PYTHON_PORT
-            )
-            return response or {}
-
-        except Exception as e:
-            logger.error(f"Error placing actor: {e}")
-            return {}
-
-    logger.info("Actor tools registered successfully")
-
-    @mcp.tool()
     def create_terrain(
         ctx: Context,
         name: str,
@@ -291,7 +246,7 @@ def register_actor_tools(mcp: FastMCP):
             Dict containing the created actor's properties
         """
 
-        heightmap_path = generate_custom_heightmap(
+        heightmap_path = create_heightmap(
             width=1009,
             height=1009,
             base_scale=base_scale,

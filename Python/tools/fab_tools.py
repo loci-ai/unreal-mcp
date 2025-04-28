@@ -1,26 +1,22 @@
 import logging
 import os
-from pathlib import Path
 import tempfile
+from pathlib import Path
 from urllib.parse import urlparse
+
 import boto3
 import requests
-
-from mcp.server.fastmcp import FastMCP, Context
+from env import LOCI_API_KEY
+from mcp.server.fastmcp import Context, FastMCP
 
 # Get logger
 logger = logging.getLogger("UnrealMCP")
 
-# -----------------------------------------
-# -----------------------------------------
-# LOCI_API_KEY = os.environ["LOCI_API_KEY"]
-LOCI_API_KEY="loci.N5OkjteKbxPi1dox"
-# -----------------------------------------
-# -----------------------------------------
 
 S3_CLIENT = boto3.client("s3")
 MAX_NUM_RESULTS = 5
 BUCKET = "loci-assets"
+
 
 def register_fab_tools(mcp: FastMCP):
 
@@ -36,7 +32,7 @@ def register_fab_tools(mcp: FastMCP):
             "assets" is a dictionary with asset IDs as keys and relevance scores as values.
             "returned_count" is the number of assets returned.
         """
-        max_num_results=MAX_NUM_RESULTS
+        max_num_results = MAX_NUM_RESULTS
 
         try:
             url = "https://dev.loci-api.com/3d/search"
@@ -59,7 +55,13 @@ def register_fab_tools(mcp: FastMCP):
 
             response = requests.post(url, headers=headers, params=params, data=data)
             hits = response.json().get("hits")
-            assets = {h["asset_id"]: {"name": h["filename"].split(".")[0], "relevance": h["similarity"]} for h in hits}
+            assets = {
+                h["asset_id"]: {
+                    "name": h["filename"].split(".")[0],
+                    "relevance": h["similarity"],
+                }
+                for h in hits
+            }
             return {"assets": assets, "returned_count": len(assets)}
 
         except Exception as e:
@@ -78,13 +80,15 @@ def register_fab_tools(mcp: FastMCP):
             "file_path" is the local path to the downloaded asset
         """
         try:
-            asset_path=f"s3://loci-assets/dataset_Objaverse-V1/asset_{asset_id}/{asset_id}.glb"
+            asset_path = (
+                f"s3://loci-assets/dataset_Objaverse-V1/asset_{asset_id}/{asset_id}.glb"
+            )
 
             temp_dir = tempfile.mkdtemp()
             try:
                 # Parse the S3 URI
                 parsed = urlparse(asset_path)
-                s3_key = parsed.path.lstrip('/')
+                s3_key = parsed.path.lstrip("/")
                 file_name = Path(s3_key).name
                 local_path = Path(temp_dir) / file_name
 
