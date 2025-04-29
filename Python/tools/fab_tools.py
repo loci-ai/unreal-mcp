@@ -1,34 +1,24 @@
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 import logging
 from pathlib import Path
 import requests
 import tempfile
 from urllib.parse import urlparse
 
-from Python.env import LOCI_API_KEY
-from Python.tools.utils.loci_utils import (
+from .utils.loci_utils import (
     MONGO_MASTER_ASSET_COLLECTION,
     S3_BUCKET,
     S3_CLIENT,
 )
+from .utils.search import Asset, get_asset_index, search
+
 from mcp.server.fastmcp import Context, FastMCP
 
 # Get logger
 logger = logging.getLogger("UnrealMCP")
 
-
-MAX_NUM_RESULTS = 5
-
-
-MAX_RESULTS = 10
-FAB_SEARCH_URL = "https://fab-admin.daec.live.use1a.on.epicgames.com/i/listings/search"
-
-
-@dataclass
-class Asset:
-    uid: str
-    title: str
-    asset_s3_path: str = None
+MAX_RESULTS = 5
+FAB_SEARCH_URL = "https://www.fab.com/i/listings/search"
 
 
 def get_mongo_assets(key_uid: str, key_title: str, uids: list[str]) -> list[Asset]:
@@ -90,8 +80,10 @@ def register_fab_tools(mcp: FastMCP):
                 "asset_formats": "glb",  # Needed as we only ingested these - eventually remove
                 "q": text_query,
             }
-
-            headers = {"accept": "application/json"}
+            headers = {
+                "User-Agent": "Mozilla/5.0",
+                "accept": "application/json",
+            }
 
             response = requests.get(url=FAB_SEARCH_URL, headers=headers, params=params)
             results = response.json()["results"]
@@ -146,39 +138,65 @@ def register_fab_tools(mcp: FastMCP):
         """
 
         try:
-            url = "https://dev.loci-api.com/3d/search"
-            params = {
-                "page_size": max_results,
-                "page_number": 1,
-                "should_translate": "false",
-                "debug": "true",
-            }
-            headers = {
-                "accept": "application/json",
-                "x-api-key": LOCI_API_KEY,
-                "Content-Type": "application/x-www-form-urlencoded",
-            }
-            data = {
-                "text_query": text_query,
-                "model_name": "loci",
-                "similarity_threshold": 0.5,
-            }
 
-            response = requests.post(url, headers=headers, params=params, data=data)
-            results = response.json().get("hits")
-            results = sorted(results, key=lambda x: x["similarity"], reverse=True)
-            results_uids = [h["asset_id"] for h in results]
-
-            assets = get_mongo_assets(
-                key_uid="source_id",
-                key_title="asset_name",
-                uids=results_uids,
-            )
-            assets = [asdict(a) for a in assets[:max_results]]
+            index = get_asset_index()
+            assets = search(query=text_query, index=index, k=max_results)
+            assets = [asdict(a) for a in assets]
             return {"assets": assets, "returned_count": len(assets)}
 
         except Exception as e:
             return {"error": f"FAB search failed: {str(e)}"}
+
+    # @mcp.tool()
+    # def search_loci_assets(
+    #     ctx: Context, text_query=None, max_results: int = MAX_RESULTS
+    # ):
+    #     """Search assets in LOCI.
+    #     Args:
+    #         ctx: The MCP context
+    #         text_query: Query string to search
+    #         max_results: Maximum number of results to return
+
+    #     Returns:
+    #         Dict containing keys "assets" and "returned_count"
+    #         "assets" is a list of dictionaries with keys "uid", "title", and "asset_s3_path".
+    #         "returned_count" is the number of assets returned.
+    #     """
+
+    #     try:
+    #         url = "https://dev.loci-api.com/3d/search"
+    #         params = {
+    #             "page_size": max_results,
+    #             "page_number": 1,
+    #             "should_translate": "false",
+    #             "debug": "true",
+    #         }
+    #         headers = {
+    #             "accept": "application/json",
+    #             "x-api-key": LOCI_API_KEY,
+    #             "Content-Type": "application/x-www-form-urlencoded",
+    #         }
+    #         data = {
+    #             "text_query": text_query,
+    #             "model_name": "loci",
+    #             "similarity_threshold": 0.5,
+    #         }
+
+    #         response = requests.post(url, headers=headers, params=params, data=data)
+    #         results = response.json().get("hits")
+    #         results = sorted(results, key=lambda x: x["similarity"], reverse=True)
+    #         results_uids = [h["asset_id"] for h in results]
+
+    #         assets = get_mongo_assets(
+    #             key_uid="source_id",
+    #             key_title="asset_name",
+    #             uids=results_uids,
+    #         )
+    #         assets = [asdict(a) for a in assets[:max_results]]
+    #         return {"assets": assets, "returned_count": len(assets)}
+
+    #     except Exception as e:
+    #         return {"error": f"FAB search failed: {str(e)}"}
 
     @mcp.tool()
     def download_s3_asset(ctx: Context, asset_s3_path: str):
