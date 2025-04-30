@@ -9,4 +9,11 @@ void UPythonExtension::LaunchScriptOnGameThread(const FString& PythonCode)
         IPythonScriptPlugin::Get()->ExecPythonCommand(*PythonCode);
         return false; // don't repeat
     }), 0.1f);
+
+
+}
+
+bool UPythonExtension::IsInGameThread()
+{
+    return ::IsInGameThread();  // Calls the native function directly
 }

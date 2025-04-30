@@ -2,15 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "EditorSubsystem.h"
-#include "Sockets.h"
-#include "SocketSubsystem.h"
-#include "Http.h"
 #include "Json.h"
-#include "Interfaces/IPv4/IPv4Address.h"
-#include "Interfaces/IPv4/IPv4Endpoint.h"
 #include "UnrealMCPBridge.generated.h"
 
-class FMCPServerRunnable;
 class FUnrealMCPActorCommands;
 class FUnrealMCPEditorCommands;
 class FUnrealMCPBlueprintCommands;
@@ -42,10 +36,8 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
-	// Server functions
-	void StartServer();
-	void StopServer();
-	bool IsRunning() const { return bIsRunning; }
+	UFUNCTION(BlueprintCallable, Category = "MCP")
+	FString ExecuteCommandFromJson(const FString& CommandType, const FString& ParamsJson);
 
 	// Command execution
 	FString ExecuteCommand(const FString& CommandType, const TSharedPtr<FJsonObject>& Params);
@@ -61,15 +53,6 @@ protected:
 	TSharedPtr<FJsonObject> ActorToJsonObject(AActor* Actor, bool bDetailed = false);
 
 private:
-	// Server state
-	bool bIsRunning;
-	TSharedPtr<FSocket> ListenerSocket;
-	TSharedPtr<FSocket> ConnectionSocket;
-	FRunnableThread* ServerThread;
-
-	// Server configuration
-	FIPv4Address ServerAddress;
-	uint16 Port;
 
 	// Command handler instances
 	TSharedPtr<FUnrealMCPActorCommands> ActorCommands;

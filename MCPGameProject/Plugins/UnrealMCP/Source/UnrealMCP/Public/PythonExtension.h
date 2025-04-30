@@ -12,4 +12,7 @@ class UNREALMCP_API UPythonExtension : public UObject
 public:
     UFUNCTION(BlueprintCallable, Category="Python")
     static void LaunchScriptOnGameThread(const FString& PythonCode);
+
+    UFUNCTION(BlueprintCallable, Category="Python")
+    static bool IsInGameThread();
 };

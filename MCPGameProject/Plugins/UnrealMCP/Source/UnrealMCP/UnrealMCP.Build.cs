@@ -34,7 +34,7 @@ public class UnrealMCP : ModuleRules
 				"HTTP",
 				"Json",
 				"JsonUtilities",
-				"DeveloperSettings"
+				"DeveloperSettings",
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);
@@ -66,7 +66,8 @@ public class UnrealMCP : ModuleRules
 				"InterchangePipelines",
 				"Landscape",
 				"LandscapeEditor",
-				"Foliage"
+				"Foliage",
+				"UMG",
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);

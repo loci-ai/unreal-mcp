@@ -3,6 +3,8 @@ Python/unreal_mcp.log
 
 # data
 data/
+MCPGameProject/Plugins/UnrealMCP/Content/Data
+
 
 # AI-related files
 .cursorrules
