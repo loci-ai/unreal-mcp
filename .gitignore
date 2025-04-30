@@ -138,7 +138,6 @@ MCP/temp/
 # Large media files
 Content/Movies/
 Content/Audio/
-*.uasset
 *.umap
 *.mp4
 *.mp3
