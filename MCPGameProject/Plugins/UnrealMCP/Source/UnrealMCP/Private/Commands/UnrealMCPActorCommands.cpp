@@ -27,7 +27,7 @@
 #include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Misc/FileHelper.h"
-#include "HAL/PlatformFilemanager.h"
+// #include "HAL/PlatformFilemanager.h"
 #include "Landscape.h"
 #include "LandscapeComponent.h"
 #include "LandscapeEdit.h"
@@ -35,12 +35,11 @@
 #include "UObject/SoftObjectPath.h"
 #include "Containers/Ticker.h"
 
-
 FUnrealMCPActorCommands::FUnrealMCPActorCommands()
 {
 }
 
-TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCommand(const FString& CommandType, const TSharedPtr<FJsonObject>& Params)
+TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCommand(const FString &CommandType, const TSharedPtr<FJsonObject> &Params)
 {
     if (CommandType == TEXT("get_actors_in_level"))
     {
@@ -70,17 +69,17 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCommand(const FString& Co
     {
         return HandleCreateTerrain(Params);
     }
-    
+
     return FUnrealMCPCommonUtils::CreateErrorResponse(FString::Printf(TEXT("Unknown actor command: %s"), *CommandType));
 }
 
-TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleGetActorsInLevel(const TSharedPtr<FJsonObject>& Params)
+TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleGetActorsInLevel(const TSharedPtr<FJsonObject> &Params)
 {
-    TArray<AActor*> AllActors;
+    TArray<AActor *> AllActors;
     UGameplayStatics::GetAllActorsOfClass(GWorld, AActor::StaticClass(), AllActors);
-    
+
     TArray<TSharedPtr<FJsonValue>> ActorArray;
-    for (AActor* Actor : AllActors)
+    for (AActor *Actor : AllActors)
     {
         if (Actor)
         {
@@ -90,40 +89,40 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleGetActorsInLevel(const TS
             ActorArray.Add(MakeShared<FJsonValueObject>(ActorObject));
         }
     }
-    
+
     TSharedPtr<FJsonObject> ResultObj = MakeShared<FJsonObject>();
     ResultObj->SetArrayField(TEXT("actors"), ActorArray);
-    
+
     return ResultObj;
 }
 
-TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleFindActorsByName(const TSharedPtr<FJsonObject>& Params)
+TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleFindActorsByName(const TSharedPtr<FJsonObject> &Params)
 {
     FString Pattern;
     if (!Params->TryGetStringField(TEXT("pattern"), Pattern))
     {
         return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Missing 'pattern' parameter"));
     }
-    
-    TArray<AActor*> AllActors;
+
+    TArray<AActor *> AllActors;
     UGameplayStatics::GetAllActorsOfClass(GWorld, AActor::StaticClass(), AllActors);
-    
+
     TArray<TSharedPtr<FJsonValue>> MatchingActors;
-    for (AActor* Actor : AllActors)
+    for (AActor *Actor : AllActors)
     {
         if (Actor && Actor->GetName().Contains(Pattern))
         {
             MatchingActors.Add(FUnrealMCPCommonUtils::ActorToJson(Actor));
         }
     }
-    
+
     TSharedPtr<FJsonObject> ResultObj = MakeShared<FJsonObject>();
     ResultObj->SetArrayField(TEXT("actors"), MatchingActors);
-    
+
     return ResultObj;
 }
 
-TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateActor(const TSharedPtr<FJsonObject>& Params)
+TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateActor(const TSharedPtr<FJsonObject> &Params)
 {
     // Get required parameters
     FString ActorType;
@@ -158,8 +157,8 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateActor(const TShared
     }
 
     // Create the actor based on type
-    AActor* NewActor = nullptr;
-    UWorld* World = GEditor->GetEditorWorldContext().World();
+    AActor *NewActor = nullptr;
+    UWorld *World = GEditor->GetEditorWorldContext().World();
 
     if (!World)
     {
@@ -167,9 +166,9 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateActor(const TShared
     }
 
     // Check if an actor with this name already exists
-    TArray<AActor*> AllActors;
+    TArray<AActor *> AllActors;
     UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), AllActors);
-    for (AActor* Actor : AllActors)
+    for (AActor *Actor : AllActors)
     {
         if (Actor && Actor->GetActorLabel() == ActorName)
         {
@@ -219,7 +218,7 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateActor(const TShared
     return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to create actor"));
 }
 
-TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleDeleteActor(const TSharedPtr<FJsonObject>& Params)
+TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleDeleteActor(const TSharedPtr<FJsonObject> &Params)
 {
     FString ActorName;
     if (!Params->TryGetStringField(TEXT("name"), ActorName))
@@ -227,29 +226,29 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleDeleteActor(const TShared
         return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Missing 'name' parameter"));
     }
 
-    TArray<AActor*> AllActors;
+    TArray<AActor *> AllActors;
     UGameplayStatics::GetAllActorsOfClass(GWorld, AActor::StaticClass(), AllActors);
-    
-    for (AActor* Actor : AllActors)
+
+    for (AActor *Actor : AllActors)
     {
         if (Actor && Actor->GetActorLabel() == ActorName)
         {
             // Store actor info before deletion for the response
             TSharedPtr<FJsonObject> ActorInfo = FUnrealMCPCommonUtils::ActorToJsonObject(Actor);
-            
+
             // Delete the actor
             Actor->Destroy();
-            
+
             TSharedPtr<FJsonObject> ResultObj = MakeShared<FJsonObject>();
             ResultObj->SetObjectField(TEXT("deleted_actor"), ActorInfo);
             return ResultObj;
         }
     }
-    
+
     return FUnrealMCPCommonUtils::CreateErrorResponse(FString::Printf(TEXT("Actor not found: %s"), *ActorName));
 }
 
-TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleSetActorTransform(const TSharedPtr<FJsonObject>& Params)
+TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleSetActorTransform(const TSharedPtr<FJsonObject> &Params)
 {
     // Get actor name
     FString ActorName;
@@ -259,11 +258,11 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleSetActorTransform(const T
     }
 
     // Find the actor
-    AActor* TargetActor = nullptr;
-    TArray<AActor*> AllActors;
+    AActor *TargetActor = nullptr;
+    TArray<AActor *> AllActors;
     UGameplayStatics::GetAllActorsOfClass(GWorld, AActor::StaticClass(), AllActors);
-    
-    for (AActor* Actor : AllActors)
+
+    for (AActor *Actor : AllActors)
     {
         if (Actor && Actor->GetActorLabel() == ActorName)
         {
@@ -300,7 +299,7 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleSetActorTransform(const T
     return FUnrealMCPCommonUtils::ActorToJsonObject(TargetActor, true);
 }
 
-TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleGetActorProperties(const TSharedPtr<FJsonObject>& Params)
+TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleGetActorProperties(const TSharedPtr<FJsonObject> &Params)
 {
     // Get actor name
     FString ActorName;
@@ -310,11 +309,11 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleGetActorProperties(const 
     }
 
     // Find the actor
-    AActor* TargetActor = nullptr;
-    TArray<AActor*> AllActors;
+    AActor *TargetActor = nullptr;
+    TArray<AActor *> AllActors;
     UGameplayStatics::GetAllActorsOfClass(GWorld, AActor::StaticClass(), AllActors);
-    
-    for (AActor* Actor : AllActors)
+
+    for (AActor *Actor : AllActors)
     {
         if (Actor && Actor->GetName() == ActorName)
         {
@@ -332,7 +331,7 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleGetActorProperties(const 
     return FUnrealMCPCommonUtils::ActorToJsonObject(TargetActor, true);
 }
 
-bool LoadRawHeightmapR16(const FString& FilePath, TArray<uint16>& OutHeightData)
+bool LoadRawHeightmapR16(const FString &FilePath, TArray<uint16> &OutHeightData)
 {
     TArray<uint8> RawBytes;
     if (!FFileHelper::LoadFileToArray(RawBytes, *FilePath))
@@ -355,7 +354,7 @@ bool LoadRawHeightmapR16(const FString& FilePath, TArray<uint16>& OutHeightData)
     return true;
 }
 
-TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateTerrain(const TSharedPtr<FJsonObject>& Params)
+TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateTerrain(const TSharedPtr<FJsonObject> &Params)
 {
     FString HeightMapPath;
     if (!Params->TryGetStringField(TEXT("heightmap_path"), HeightMapPath))
@@ -375,7 +374,7 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateTerrain(const TShar
         return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to load heightmap data"));
     }
 
-    UWorld* World = GEditor->GetEditorWorldContext().World();
+    UWorld *World = GEditor->GetEditorWorldContext().World();
     if (!World)
     {
         return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to get editor world"));
@@ -402,12 +401,12 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateTerrain(const TShar
 
     // Add the height data to the map with a blank GUID
     HeightDataPerLayers.Add(FGuid(), MoveTemp(HeightData));
-    
+
     // Add empty material layers with blank GUID
     MaterialLayerDataPerLayers.Add(FGuid(), MoveTemp(MaterialImportLayers));
 
     // Spawn the landscape actor
-    ALandscape* Landscape = World->SpawnActor<ALandscape>();
+    ALandscape *Landscape = World->SpawnActor<ALandscape>();
     if (!Landscape)
     {
         return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to spawn landscape actor"));
@@ -426,22 +425,21 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateTerrain(const TShar
 
     // Import the height data into the landscape
     Landscape->Import(
-        FGuid::NewGuid(), 
-        0, 0, 
+        FGuid::NewGuid(),
+        0, 0,
         SizeX - 1, SizeY - 1,
         SectionsPerComponent,
-        QuadsPerComponent, 
-        HeightDataPerLayers, 
+        QuadsPerComponent,
+        HeightDataPerLayers,
         nullptr,
-        MaterialLayerDataPerLayers, 
-        ELandscapeImportAlphamapType::Additive
-    );
+        MaterialLayerDataPerLayers,
+        ELandscapeImportAlphamapType::Additive);
 
     // Calculate and set static lighting LOD
     Landscape->StaticLightingLOD = FMath::DivideAndRoundUp(FMath::CeilLogTwo((SizeX * SizeY) / (2048 * 2048) + 1), (uint32)2);
-    
+
     // Update landscape info
-    ULandscapeInfo* LandscapeInfo = Landscape->GetLandscapeInfo();
+    ULandscapeInfo *LandscapeInfo = Landscape->GetLandscapeInfo();
     if (LandscapeInfo)
     {
         LandscapeInfo->UpdateLayerInfoMap(Landscape);
@@ -463,8 +461,6 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateTerrain(const TShar
     }
 
     return FUnrealMCPCommonUtils::ActorToJsonObject(Landscape, true);
-
-    
 
     return FUnrealMCPCommonUtils::ActorToJsonObject(Landscape, true);
 }

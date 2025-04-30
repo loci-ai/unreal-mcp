@@ -298,6 +298,16 @@ register_genai_tools(mcp)
 def unreal_best_practices():
     """Best practices for working with Unreal MCP."""
     return """
+    ## Asset creation
+    If you are creating assets, consider using the following tools:
+    - **GenAI**: Generates a 3D model from an image (via text->image->3D tools).
+    - **FAB**: Searching on FAB (Asset marketplace)
+
+    Before creating/searching for an asset, ask the user which one they want to use by replying:
+     'Do you want to use GenAI or search on FAB?'
+    If the user wants to use GenAI, ask them to upload an image and then generate a 3D model from it.
+    If the user wants to search on FAB, ask them to provide a search term and then search for the asset on FAB.
+
     
     ## Best Practices
     ### Actor Creation and Management

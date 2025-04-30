@@ -20,12 +20,30 @@ S3_CLIENT = boto3.client("s3")
 def register_genai_tools(mcp: FastMCP):
 
     @mcp.tool()
-    def generate_image_from_text_prompt(ctx: Context, text_prompt=None):
+    def do_nothing(ctx: Context):
+        """A tool that does nothing and returns a success message.
+
+        Args:
+            ctx: The MCP context
+        Returns:
+            Dict containing keys "status" and "message"
+            "status" indicates success or failure
+            "message" provides additional information
+        """
+        return {
+            "status": "success",
+            "message": "This tool does nothing, but it works!",
+        }
+
+    @mcp.tool()
+    def generate_image_from_text_prompt(ctx: Context, text_prompt: str, seed:int=0):
         """Generate an image from a text prompt.
 
         Args:
             ctx: The MCP context
-            text_prompt: The text prompt to generate an image from.
+            text_prompt: The text prompt to generate an image from. (Max 120 characters)
+            The prompt should be a single sentence and not contain any special characters.
+            seed: The seed to use for the image generation. Use different seeds for variation (Optional)
 
         Returns:
             Dict containing keys "status", "message", and "file_path"
@@ -44,7 +62,7 @@ def register_genai_tools(mcp: FastMCP):
             # ------------------------------- text to image ------------------------------ #
             text_to_image_url = "https://dev.loci-api.com/image/generate"
 
-            data = {"prompt": text_prompt}
+            data = {"prompt": text_prompt, "seed": seed}
 
             image_response = requests.post(
                 text_to_image_url, headers=headers, data=data
@@ -73,12 +91,14 @@ def register_genai_tools(mcp: FastMCP):
             return {"error": f"Failed to generate image from prompt: {str(e)}"}
 
     @mcp.tool()
-    def generate_asset_from_image(ctx: Context, image_path=None):
+    def generate_asset_from_image(ctx: Context, image_path: str, generate_textures: bool = True):
         """Generate a 3D model from an image.
 
         Args:
             ctx: The MCP context
             image_path: The local path to the image.
+            generate_textures: Whether to generate textures for the 3D model. (Optional)
+            The default is True, which means textures will be generated.
 
         Returns:
             Dict containing keys "status", "message", and "file_path"
@@ -99,30 +119,34 @@ def register_genai_tools(mcp: FastMCP):
 
             files = {"file": open(file=image_path, mode="rb")}
 
-            data = {"model_name": "hunyuan", "generate_textures": False}
+            data = {"model_name": "hunyuan", "generate_textures": generate_textures}
 
             asset_response = requests.post(
                 image_to_3d_url, headers=headers, data=data, files=files
             )
             asset_response.raise_for_status()
-            asset_base64 = asset_response.json()["contents_base64"]
+            presigned_url = asset_response.json()["presigned_url"]
             logger.info(f"Successully generated 3d asset from image")
 
-            temp_dir = tempfile.mkdtemp()
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".glb") as tmp_file:
+                # Download the file content
+                response = requests.get(presigned_url)
+                response.raise_for_status()  # Raise error if download failed
 
-            local_path = f"{temp_dir}/ai_generated_asset_{os.path.basename(image_path).split('.')[0]}.glb"
+                # Write content to temp file
+                tmp_file.write(response.content)
 
-            with open(local_path, "wb") as f:
-                f.write(base64.b64decode(asset_base64))
+                # Get temp file path
+                temp_file_path = tmp_file.name
 
             logger.info(
-                f"Generating a 3d asset from text prompt took {time()-tic} seconds. Asset saved to {local_path}"
+                f"Generating a 3d asset from text prompt took {time()-tic} seconds. Asset saved to {presigned_url}"
             )
 
             return {
                 "status": "success",
                 "message": "Asset successfully generated",
-                "file_path": local_path,
+                "file_path": temp_file_path,
             }
         except Exception as e:
             return {"error": f"Failed to generate asset from prompt: {str(e)}"}

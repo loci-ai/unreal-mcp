@@ -1,0 +1,883 @@
+{
+	"folders": [
+		{
+			"name": "MCPGameProject",
+			"path": "."
+		},
+		{
+			"name": "UE5",
+			"path": "/home/jack/Unreal"
+		}
+        {
+            "name": "Python MCP",
+            "path": "/home/jack/Loci/unreal-mcp/Python"
+        }
+	],
+	"settings": {
+		"typescript.tsc.autoDetect": "off",
+		"npm.autoDetect": "off",
+		"terminal.integrated.env.linux": {
+			"PATH": "/home/jack/Unreal/Engine/Binaries/ThirdParty/DotNet/8.0.300/linux-x64:${env:PATH}",
+			"DOTNET_ROOT": "/home/jack/Unreal/Engine/Binaries/ThirdParty/DotNet/8.0.300/linux-x64",
+			"DOTNET_HOST_PATH": "/home/jack/Unreal/Engine/Binaries/ThirdParty/DotNet/8.0.300/linux-x64/dotnet",
+			"DOTNET_MULTILEVEL_LOOKUP": "0",
+			"DOTNET_ROLL_FORWARD": "LatestMajor"
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"ms-vscode.cpptools",
+			"ms-dotnettools.csharp"
+		]
+	},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "MCPGameProject Linux Debug Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"Debug",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux Debug Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"Debug",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MCPGameProject Linux Debug Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux Debug Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"Debug",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux DebugGame Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"DebugGame",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux DebugGame Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"DebugGame",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MCPGameProject Linux DebugGame Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux DebugGame Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"DebugGame",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux Development Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"Development",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux Development Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"Development",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MCPGameProject Linux Development Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux Development Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"Development",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux Test Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"Test",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux Test Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"Test",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MCPGameProject Linux Test Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux Test Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"Test",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux Shipping Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"Shipping",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux Shipping Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"Shipping",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MCPGameProject Linux Shipping Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject Linux Shipping Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"Linux",
+					"Shipping",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 Debug Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"Debug",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 Debug Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"Debug",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MCPGameProject LinuxArm64 Debug Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 Debug Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"Debug",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 DebugGame Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"DebugGame",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 DebugGame Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"DebugGame",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MCPGameProject LinuxArm64 DebugGame Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 DebugGame Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"DebugGame",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 Development Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"Development",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 Development Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"Development",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MCPGameProject LinuxArm64 Development Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 Development Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"Development",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 Test Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"Test",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 Test Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"Test",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MCPGameProject LinuxArm64 Test Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 Test Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"Test",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 Shipping Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"Shipping",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 Shipping Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"Shipping",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MCPGameProject LinuxArm64 Shipping Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProject LinuxArm64 Shipping Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProject",
+					"LinuxArm64",
+					"Shipping",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProjectEditor Linux Debug Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProjectEditor",
+					"Linux",
+					"Debug",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProjectEditor Linux Debug Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProjectEditor",
+					"Linux",
+					"Debug",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MCPGameProjectEditor Linux Debug Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProjectEditor Linux Debug Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProjectEditor",
+					"Linux",
+					"Debug",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProjectEditor Linux DebugGame Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProjectEditor",
+					"Linux",
+					"DebugGame",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProjectEditor Linux DebugGame Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProjectEditor",
+					"Linux",
+					"DebugGame",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MCPGameProjectEditor Linux DebugGame Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProjectEditor Linux DebugGame Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProjectEditor",
+					"Linux",
+					"DebugGame",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProjectEditor Linux Development Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProjectEditor",
+					"Linux",
+					"Development",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProjectEditor Linux Development Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProjectEditor",
+					"Linux",
+					"Development",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MCPGameProjectEditor Linux Development Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			},
+			{
+				"label": "MCPGameProjectEditor Linux Development Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MCPGameProjectEditor",
+					"Linux",
+					"Development",
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/jack/Unreal"
+				}
+			}
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Launch MCPGameProject (Debug)",
+				"request": "launch",
+				"program": "/home/jack/Loci/unreal-mcp/MCPGameProject/Binaries/Linux/UnrealGame-Linux-Debug",
+				"preLaunchTask": "MCPGameProject Linux Debug Build",
+				"args": [
+				],
+				"cwd": "/home/jack/Unreal",
+				"type": "cppdbg",
+				"visualizerFile": "/home/jack/Unreal/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MCPGameProject (DebugGame)",
+				"request": "launch",
+				"program": "/home/jack/Loci/unreal-mcp/MCPGameProject/Binaries/Linux/UnrealGame-Linux-DebugGame",
+				"preLaunchTask": "MCPGameProject Linux DebugGame Build",
+				"args": [
+				],
+				"cwd": "/home/jack/Unreal",
+				"type": "cppdbg",
+				"visualizerFile": "/home/jack/Unreal/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MCPGameProject (Development)",
+				"request": "launch",
+				"program": "/home/jack/Loci/unreal-mcp/MCPGameProject/Binaries/Linux/UnrealGame",
+				"preLaunchTask": "MCPGameProject Linux Development Build",
+				"args": [
+				],
+				"cwd": "/home/jack/Unreal",
+				"type": "cppdbg",
+				"visualizerFile": "/home/jack/Unreal/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MCPGameProject (Test)",
+				"request": "launch",
+				"program": "/home/jack/Loci/unreal-mcp/MCPGameProject/Binaries/Linux/UnrealGame-Linux-Test",
+				"preLaunchTask": "MCPGameProject Linux Test Build",
+				"args": [
+				],
+				"cwd": "/home/jack/Unreal",
+				"type": "cppdbg",
+				"visualizerFile": "/home/jack/Unreal/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MCPGameProject (Shipping)",
+				"request": "launch",
+				"program": "/home/jack/Loci/unreal-mcp/MCPGameProject/Binaries/Linux/UnrealGame-Linux-Shipping",
+				"preLaunchTask": "MCPGameProject Linux Shipping Build",
+				"args": [
+				],
+				"cwd": "/home/jack/Unreal",
+				"type": "cppdbg",
+				"visualizerFile": "/home/jack/Unreal/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MCPGameProjectEditor (Debug)",
+				"request": "launch",
+				"program": "/home/jack/Unreal/Engine/Binaries/Linux/UnrealEditor-Linux-Debug",
+				"preLaunchTask": "MCPGameProjectEditor Linux Debug Build",
+				"args": [
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject"
+				],
+				"cwd": "/home/jack/Unreal",
+				"type": "cppdbg",
+				"visualizerFile": "/home/jack/Unreal/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MCPGameProjectEditor (DebugGame)",
+				"request": "launch",
+				"program": "/home/jack/Unreal/Engine/Binaries/Linux/UnrealEditor-Linux-DebugGame",
+				"preLaunchTask": "MCPGameProjectEditor Linux DebugGame Build",
+				"args": [
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject"
+				],
+				"cwd": "/home/jack/Unreal",
+				"type": "cppdbg",
+				"visualizerFile": "/home/jack/Unreal/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MCPGameProjectEditor (Development)",
+				"request": "launch",
+				"program": "/home/jack/Unreal/Engine/Binaries/Linux/UnrealEditor",
+				"preLaunchTask": "MCPGameProjectEditor Linux Development Build",
+				"args": [
+					"/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject"
+				],
+				"cwd": "/home/jack/Unreal",
+				"type": "cppdbg",
+				"visualizerFile": "/home/jack/Unreal/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Generate Project Files",
+				"type": "coreclr",
+				"request": "launch",
+				"preLaunchTask": "UnrealBuildTool Linux Development Build",
+				"program": "/home/jack/Unreal/Engine/Build/BatchFiles/RunUBT.bat",
+				"args": [
+					"-projectfiles",
+					"-vscode",
+					"-project=/home/jack/Loci/unreal-mcp/MCPGameProject/MCPGameProject.uproject",
+					"-game",
+					"-engine",
+					"-dotnet"
+				],
+				"env": {
+					"PATH": "/home/jack/Unreal/Engine/Binaries/ThirdParty/DotNet/8.0.300/linux-x64:${env:PATH}",
+					"DOTNET_ROOT": "/home/jack/Unreal/Engine/Binaries/ThirdParty/DotNet/8.0.300/linux-x64",
+					"DOTNET_HOST_PATH": "/home/jack/Unreal/Engine/Binaries/ThirdParty/DotNet/8.0.300/linux-x64/dotnet",
+					"DOTNET_MULTILEVEL_LOOKUP": "0",
+					"DOTNET_ROLL_FORWARD": "LatestMajor"
+				},
+				"console": "internalConsole",
+				"internalConsoleOptions": "openOnSessionStart",
+				"stopAtEntry": false,
+				"cwd": "/home/jack/Unreal"
+			}
+		]
+	}
+}
