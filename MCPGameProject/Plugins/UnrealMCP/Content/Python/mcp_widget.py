@@ -63,6 +63,7 @@ class MCPChatWidget:
         self.mcp_server = create_mcp_server()
         self.agent = Agent(
             name="UnrealMCPAgent",
+            model="gpt-4.1-2025-04-14",
             instructions="You are a helpful unreal editor assistant.",
             mcp_servers=[self.mcp_server],
         )
