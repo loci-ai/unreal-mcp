@@ -1,12 +1,10 @@
 from dataclasses import asdict
-import logging
 from pathlib import Path
 import requests
 import tempfile
 from urllib.parse import urlparse
 
-from env import LOCI_API_KEY
-from tools.utils.loci_utils import (
+from .utils.loci_utils import (
     MONGO_MASTER_ASSET_COLLECTION,
     S3_BUCKET,
     S3_CLIENT,
@@ -14,9 +12,6 @@ from tools.utils.loci_utils import (
 from .utils.search import Asset, get_asset_index, search
 
 from mcp.server.fastmcp import Context, FastMCP
-
-# Get logger
-logger = logging.getLogger("UnrealMCP")
 
 MAX_RESULTS = 5
 FAB_SEARCH_URL = "https://www.fab.com/i/listings/search"
@@ -75,52 +70,48 @@ def register_fab_tools(mcp: FastMCP):
             "assets" is a list of dictionaries with keys "uid", "title", and "asset_s3_path".
             "returned_count" is the number of assets returned.
         """
-        try:
-            params = {
-                "listing_types": "3d-model",
-                "asset_formats": "glb",  # Needed as we only ingested these - eventually remove
-                "q": text_query,
-            }
-            headers = {
-                "User-Agent": "Mozilla/5.0",
-                "accept": "application/json",
-            }
+        params = {
+            "listing_types": "3d-model",
+            "asset_formats": "glb",  # Needed as we only ingested these - eventually remove
+            "q": text_query,
+        }
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "accept": "application/json",
+        }
 
-            response = requests.get(url=FAB_SEARCH_URL, headers=headers, params=params)
-            results = response.json()["results"]
-            result_uids = [r["uid"] for r in results]
-            assets = get_mongo_assets(
-                key_uid="metadata.source.fab._source.uid",
-                key_title="metadata.source.fab._source.title",
-                uids=result_uids,
-            )
+        response = requests.get(url=FAB_SEARCH_URL, headers=headers, params=params)
+        results = response.json()["results"]
+        result_uids = [r["uid"] for r in results]
+        assets = get_mongo_assets(
+            key_uid="metadata.source.fab._source.uid",
+            key_title="metadata.source.fab._source.title",
+            uids=result_uids,
+        )
 
-            if len(assets) < max_results and len(results) > max_results:
-                while len(assets) < max_results:
-                    next_cursor = response.json()["cursors"]["next"]
-                    params["cursor"] = next_cursor
-                    response = requests.get(
-                        url=FAB_SEARCH_URL, headers=headers, params=params
-                    )
-                    results = response.json()["results"]
-                    if len(results) == 0:
-                        break
+        if len(assets) < max_results and len(results) > max_results:
+            while len(assets) < max_results:
+                next_cursor = response.json()["cursors"]["next"]
+                params["cursor"] = next_cursor
+                response = requests.get(
+                    url=FAB_SEARCH_URL, headers=headers, params=params
+                )
+                results = response.json()["results"]
+                if len(results) == 0:
+                    break
 
-                    result_uids = [r["uid"] for r in results]
-                    new_assets = get_mongo_assets(
-                        key_uid="metadata.source.fab._source.uid",
-                        key_title="metadata.source.fab._source.title",
-                        uids=result_uids,
-                    )
-                    assets.extend(new_assets)
-                    if len(assets) > max_results:
-                        break
+                result_uids = [r["uid"] for r in results]
+                new_assets = get_mongo_assets(
+                    key_uid="metadata.source.fab._source.uid",
+                    key_title="metadata.source.fab._source.title",
+                    uids=result_uids,
+                )
+                assets.extend(new_assets)
+                if len(assets) > max_results:
+                    break
 
-            assets = [asdict(a) for a in assets[:max_results]]
-            return {"assets": assets, "returned_count": len(assets)}
-
-        except Exception as e:
-            return {"error": f"FAB search failed: {str(e)}"}
+        assets = [asdict(a) for a in assets[:max_results]]
+        return {"assets": assets, "returned_count": len(assets)}
 
     @mcp.tool()
     def search_loci_assets(
