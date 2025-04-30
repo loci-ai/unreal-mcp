@@ -34,7 +34,9 @@ public class UnrealMCP : ModuleRules
 				"HTTP",
 				"Json",
 				"JsonUtilities",
-				"DeveloperSettings"
+				"DeveloperSettings",
+				"UnrealEd" ,
+				"ToolMenus"  
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);

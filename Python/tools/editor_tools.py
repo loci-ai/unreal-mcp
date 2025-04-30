@@ -5,8 +5,9 @@ This module provides tools for controlling the Unreal Editor viewport and other 
 """
 
 import logging
-from typing import Dict, List, Any, Optional
-from mcp.server.fastmcp import FastMCP, Context
+from typing import Any, Dict, List, Optional
+
+from mcp.server.fastmcp import Context, FastMCP
 
 # Get logger
 logger = logging.getLogger("UnrealMCP")
@@ -71,7 +72,7 @@ def register_editor_tools(mcp: FastMCP):
         Returns:
             Path to the imported asset
         """
-        from unreal_mcp_server import get_unreal_connection, UNREAL_PYTHON_PORT
+        from unreal_mcp_server import UNREAL_PYTHON_PORT, get_unreal_connection
 
         try:
             params = {"asset_path": asset_path}
@@ -86,6 +87,28 @@ def register_editor_tools(mcp: FastMCP):
 
         except Exception as e:
             logger.error(f"Error importing asset: {e}")
+            return {"status": "error", "message": str(e)}
+
+    @mcp.tool()
+    def view_image(ctx: Context, image_path: str) -> Dict[str, Any]:
+        """
+        View an image in a 2D image texture viewing window.
+        Args:
+            image_path (str): The path to the image to view.
+        Returns:
+            Response from Unreal Engine
+        """
+        from unreal_mcp_server import UNREAL_PYTHON_PORT, get_unreal_connection
+
+        try:
+            params = {"image_path": image_path}
+
+            unreal = get_unreal_connection(port=UNREAL_PYTHON_PORT)
+            response = unreal.send_command("view_image", params)
+            return response or {}
+
+        except Exception as e:
+            logger.error(f"Error viewing image: {e}")
             return {"status": "error", "message": str(e)}
 
     logger.info("Editor tools registered successfully")
