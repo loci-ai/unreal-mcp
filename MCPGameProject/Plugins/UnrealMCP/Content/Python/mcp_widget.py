@@ -29,6 +29,7 @@ class MCPChatWidget:
         self.current_llm_block = None
         self.current_throbber = None
         self.code_block_class = None
+        self.chat_controller = unreal.ChatWidgetController()
 
         self.setup_ui()
         self.setup_agent()
@@ -38,21 +39,22 @@ class MCPChatWidget:
         cancel_button = self.get_widget("CancelButton")
         new_chat_button = self.get_widget("NewChatButton")
 
-        submit_button.get_editor_property("OnClickedPython").add_callable(
-            self.on_submit_clicked
-        )
-        cancel_button.get_editor_property("OnClickedPython").add_callable(
-            self.on_cancel_clicked
-        )
-        new_chat_button.get_editor_property("OnClickedPython").add_callable(
-            self.on_new_chat_clicked
-        )
+        on_click_submit = submit_button.get_editor_property("OnClickedPython")
+        on_click_submit.clear()
+        on_click_submit.add_callable(self.on_submit_clicked)
+
+        on_click_cancel = cancel_button.get_editor_property("OnClickedPython")
+        on_click_cancel.clear()
+        on_click_cancel.add_callable(self.on_cancel_clicked)
+
+        on_click_new_chat = new_chat_button.get_editor_property("OnClickedPython")
+        on_click_new_chat.clear()
+        on_click_new_chat.add_callable(self.on_new_chat_clicked)
 
         submit_button.set_button_text("Submit")
         cancel_button.set_button_text("Stop Generation")
         new_chat_button.set_button_text("New Chat")
 
-        self.chat_controller = unreal.ChatWidgetController()
         self.style_set = unreal.load_object(
             None, "/UnrealMCP/Widgets/DT_ChatRichTextStyles.DT_ChatRichTextStyles"
         )
@@ -296,10 +298,23 @@ class MCPChatWidget:
             asyncio.set_event_loop(loop)
             loop.run_until_complete(task())
             loop.close()
+            self.setup_ui()  # Ensure buttons don't become unbound
+            self.log_widget_status()
 
         self.is_cancel_requested = False
         self.current_thread = threading.Thread(target=runner)
         self.current_thread.start()
+
+    @GameThreadRunner.run_on_main_thread
+    def log_widget_status(self):
+        widget = self.widget
+        submit = self.get_widget("SubmitButton")
+        unreal.log_warning(f"Widget valid: {widget is not None}")
+        unreal.log_warning(f"Submit button valid: {submit is not None}")
+        unreal.log_warning(f"Submit button is enabled: {submit.is_enabled}")
+        unreal.log_warning(
+            f"Submit button handlers: {submit.get_editor_property('OnClickedPython')}"
+        )
 
 
 def register_editor_menu():
