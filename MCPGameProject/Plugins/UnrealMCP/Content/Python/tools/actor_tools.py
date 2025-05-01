@@ -6,178 +6,158 @@ This module provides tools for creating, manipulating, and inspecting actors in 
 
 import unreal
 
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Literal
 from mcp.server.fastmcp import FastMCP, Context
 
 from runner import GameThreadRunner
 from .utils.terrain_generation import create_heightmap
 
 
+def get_actor_info(actor: unreal.Actor) -> Dict[str, Any]:
+    mesh_component = actor.static_mesh_component
+    mesh = mesh_component.get_editor_property("static_mesh")
+
+    location = actor.get_actor_location()
+    rotation = actor.get_actor_rotation()
+    scale = actor.get_actor_scale3d()
+
+    # Bounding box info
+    origin, box_extent = actor.get_actor_bounds(
+        False
+    )  # False = do not include children
+    bbox_min = [
+        origin.x - box_extent.x,
+        origin.y - box_extent.y,
+        origin.z - box_extent.z,
+    ]
+    bbox_max = [
+        origin.x + box_extent.x,
+        origin.y + box_extent.y,
+        origin.z + box_extent.z,
+    ]
+
+    info = {
+        "name": actor.get_name(),
+        "label": actor.get_actor_label(),
+        "mesh_name": mesh.get_name() if mesh else None,
+        "mesh_path": mesh.get_path_name() if mesh else None,
+        "location": [location.x, location.y, location.z],
+        "rotation": [rotation.pitch, rotation.yaw, rotation.roll],
+        "scale": [scale.x, scale.y, scale.z],
+        "tags": actor.tags,
+        "bounds": {
+            "origin": [origin.x, origin.y, origin.z],
+            "extent": [box_extent.x, box_extent.y, box_extent.z],
+            "min": bbox_min,
+            "max": bbox_max,
+        },
+    }
+
+    return info
+
+
 def register_actor_tools(mcp: FastMCP):
     """Register actor tools with the MCP server."""
 
     @mcp.tool()
-    def get_actors_in_level(ctx: Context) -> List[Dict[str, Any]]:
-        response = GameThreadRunner.run_cpp_command("get_actors_in_level", {})
-        return response or {}
-
-    @mcp.tool()
-    def find_actors_by_name(ctx: Context, pattern: str) -> List[str]:
-        response = GameThreadRunner.run_cpp_command(
-            "find_actors_by_name", {"pattern": pattern}
-        )
-        return response or {}
-
-    @mcp.tool()
-    def create_actor(
+    @GameThreadRunner.run_on_main_thread
+    def create_primative_static_mesh_actor(
         ctx: Context,
-        name: str,
-        type: str,
+        shape_type: Literal["cube", "sphere", "cone", "cylinder", "plane"],
+        name: str | None = None,
         location: List[float] = [0.0, 0.0, 0.0],
         rotation: List[float] = [0.0, 0.0, 0.0],
         scale: List[float] = [1.0, 1.0, 1.0],
     ) -> Dict[str, Any]:
-        """Create a new actor in the current level.
-
-        Args:
-            ctx: The MCP context
-            name: The name to give the new actor (must be unique)
-            type: The type of actor to create (e.g. StaticMeshActor, PointLight)
-            location: The [x, y, z] world location to spawn at
-            rotation: The [pitch, yaw, roll] rotation in degrees
-            scale: The [x, y, z] scale to apply. The
-
-        Returns:
-            Dict containing the created actor's properties
+        """Creates a StaticMeshActor using a built-in primitive shape.
+        The Rotation is specified as pitch (around Y axis), roll (around X axis), yaw (around Z axis) in degrees.
         """
-        params = {
-            "name": name,
-            "type": type.upper(),  # Make sure type is uppercase
-            "location": location,
-            "rotation": rotation,
-            "scale": scale,
+
+        PRIMITIVE_MESH_PATHS = {
+            "cube": "/Engine/BasicShapes/Cube.Cube",
+            "sphere": "/Engine/BasicShapes/Sphere.Sphere",
+            "cone": "/Engine/BasicShapes/Cone.Cone",
+            "cylinder": "/Engine/BasicShapes/Cylinder.Cylinder",
+            "plane": "/Engine/BasicShapes/Plane.Plane",
         }
 
-        # Validate location, rotation, and scale formats
-        for param_name in ["location", "rotation", "scale"]:
-            param_value = params[param_name]
-            if not isinstance(param_value, list) or len(param_value) != 3:
-                unreal.log_warning(
-                    f"Invalid {param_name} format: {param_value}. Must be a list of 3 float values."
-                )
-                raise ValueError(
-                    f"Invalid {param_name} format. Must be a list of 3 float values."
-                )
-            # Ensure all values are float
-            params[param_name] = [float(val) for val in param_value]
+        asset_path = PRIMITIVE_MESH_PATHS.get(shape_type)
 
-        unreal.log(f"Creating actor '{name}' of type '{type}' with params: {params}")
-        response = GameThreadRunner.run_cpp_command("create_actor", params)
-        return response or {}
+        if not asset_path:
+            raise ValueError(f"Unsupported primitive shape: {shape_type}")
+
+        static_mesh = unreal.EditorAssetLibrary.load_asset(asset_path)
+        if not static_mesh:
+            raise RuntimeError(
+                f"Failed to load mesh asset for '{shape_type}' at {asset_path}"
+            )
+
+        # Spawn a StaticMeshActor
+        location = unreal.Vector(*location)
+        rotation = unreal.Rotator(*rotation)
+        actor = unreal.EditorLevelLibrary.spawn_actor_from_class(
+            unreal.StaticMeshActor, location, rotation
+        )
+
+        # Set mesh and transform
+        actor.static_mesh_component.set_static_mesh(static_mesh)
+        actor.set_actor_scale3d(unreal.Vector(*scale))
+
+        # Optionally rename
+        if name:
+            actor.set_actor_label(name)
+
+        return {"success": True, "actor_name": "{}".format(actor.get_name())}
 
     @mcp.tool()
-    def delete_actor(ctx: Context, name: str) -> Dict[str, Any]:
-        """Delete an actor by name."""
-        response = GameThreadRunner.run_cpp_command("delete_actor", {"name": name})
-        return response or {}
-
-    @mcp.tool()
-    def set_actor_transform(
+    @GameThreadRunner.run_on_main_thread
+    def delete_object(
         ctx: Context,
-        name: str,
-        location: List[float] = None,
-        rotation: List[float] = None,
-        scale: List[float] = None,
+        actor_name: str,
     ) -> Dict[str, Any]:
-        """Set the transform of an actor."""
-        params = {"name": name}
-        if location is not None:
-            params["location"] = location
-        if rotation is not None:
-            params["rotation"] = rotation
-        if scale is not None:
-            params["scale"] = scale
-
-        response = GameThreadRunner.run_cpp_command("set_actor_transform", params)
-        return response or {}
+        """Deletes an actor by name."""
+        actor = unreal.EditorLevelLibrary.get_actor_reference(actor_name)
+        if actor:
+            unreal.EditorLevelLibrary.destroy_actor(actor)
+            return {"success": True}
+        else:
+            return {"success": False, "error": "Actor not found"}
 
     @mcp.tool()
-    def get_actor_properties(ctx: Context, name: str) -> Dict[str, Any]:
-        """Get all properties of an actor."""
-        response = GameThreadRunner.run_cpp_command(
-            "get_actor_properties", {"name": name}
-        )
-        return response or {}
-
-    @mcp.tool()
-    def create_terrain(
+    @GameThreadRunner.run_on_main_thread
+    def modify_actor(
         ctx: Context,
-        name: str,
-        base_scale: float = 250.0,
-        base_octaves: int = 3,
-        base_persistence: float = 0.4,
-        base_lacunarity: float = 2.0,
-        plateau_scale: float = 120.0,
-        plateau_octaves: int = 4,
-        plateau_threshold: float = 0.6,
-        plateau_height: float = 0.8,
-        plateau_softness: float = 0.15,
-        plateau_flatness: float = 3.0,
-        plateau_top_variation: float = 0.05,
-        terracing_steps: int = 0,
-        erosion_scale: float = 60.0,
-        erosion_strength: float = 0.05,
-        enable_mesa: bool = False,
-        seed: int = 42,
-    ):
-        """Create a new terrain actor in the current level.
-        Note: Does not delete existing terrain actors.
-        Args:
-            ctx: The MCP context
-            name: The name to give the new terrain actor (must be unique)
-            base_scale: Scale for the base terrain noise (higher = lower frequency)
-            base_octaves: Number of octaves for the base terrain noise
-            base_persistence: Persistence for the base terrain noise
-            base_lacunarity: Lacunarity for the base terrain noise
-            plateau_scale: Scale for the plateau noise (higher = lower frequency)
-            plateau_octaves: Number of octaves for the plateau noise
-            plateau_threshold: Threshold for plateau generation
-            plateau_height: Height of the plateaus
-            plateau_softness: Softness of the plateau edges
-            plateau_flatness: Flatness of the plateau tops
-            plateau_top_variation: Variation on the plateau tops
-            erosion_strength: Strength of the erosion effect
-            erosion_scale: Scale for the erosion noise (higher = lower frequency)
-            enable_mesa: True - big abrupt plateaus, False - plateaus blend into terrain
-            terracing_steps: Number of steps for terracing (0 disables terracing)
-            seed: Seed for the perlin noise generation
+        actor_name: str,
+        location: List[float] | None = None,
+        rotation: List[float] | None = None,
+        scale: List[float] | None = None,
+    ) -> Dict[str, Any]:
+        """Modifies an actor's transform."""
+        actor = unreal.EditorLevelLibrary.get_actor_reference(actor_name)
+        if not actor:
+            return {"success": False, "error": "Actor not found"}
 
-        Returns:
-            Dict containing the created actor's properties
-        """
+        if location:
+            actor.set_actor_location(unreal.Vector(*location))
+        if rotation:
+            actor.set_actor_rotation(unreal.Rotator(*rotation))
+        if scale:
+            actor.set_actor_scale3d(unreal.Vector(*scale))
 
-        unreal.log("In create_terrain")
-        heightmap_path = create_heightmap(
-            width=1009,
-            height=1009,
-            base_scale=base_scale,
-            base_octaves=base_octaves,
-            base_persistence=base_persistence,
-            base_lacunarity=base_lacunarity,
-            plateau_scale=plateau_scale,
-            plateau_octaves=plateau_octaves,
-            plateau_threshold=plateau_threshold,
-            plateau_height=plateau_height,
-            plateau_softness=plateau_softness,
-            plateau_flatness=plateau_flatness,
-            plateau_top_variation=plateau_top_variation,
-            terracing_steps=terracing_steps,
-            erosion_scale=erosion_scale,
-            erosion_strength=erosion_strength,
-            enable_mesa=enable_mesa,
-            seed=seed,
-        )
+        return {"success": True}
 
-        params = {"heightmap_path": heightmap_path, "name": name}
-        response = GameThreadRunner.run_cpp_command("create_terrain", params)
-        return response or {}
+    @mcp.tool()
+    @GameThreadRunner.run_on_main_thread
+    def get_all_static_mesh_actors_info() -> List[Dict[str, Any]]:
+        """Returns detailed info about all StaticMeshActors in the current level, including bounding boxes."""
+
+        actors = unreal.EditorLevelLibrary.get_all_level_actors()
+        results = []
+
+        for actor in actors:
+            if not isinstance(actor, unreal.StaticMeshActor):
+                continue
+
+            results.append(get_actor_info(actor))
+
+        return results

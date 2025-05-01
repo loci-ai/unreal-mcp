@@ -1,6 +1,7 @@
 import logging
 import numpy as np
-from noise import pnoise2, snoise2
+
+# from noise import pnoise2, snoise2
 
 from .constants import HEIGHTMAP_PATH
 

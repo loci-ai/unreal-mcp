@@ -24,8 +24,9 @@
 				"Win64",
 				"Mac",
 				"Linux"
-			]
-		}
+			],
+        "bCanHotReload": true
+		},
 	],
 	"Plugins": [
 		{
@@ -51,12 +52,10 @@
 				"openai==1.74.0",
 				"openai-agents==0.0.11",
 				"beautifulsoup4==4.12.3",
-				"noise==1.2.2",
 				"boto3==1.38.5",
 				"aiohttp",
 				"certifi",
 				"pymongo",
-				"sentence_transformers"
 			]
 		}
 	]

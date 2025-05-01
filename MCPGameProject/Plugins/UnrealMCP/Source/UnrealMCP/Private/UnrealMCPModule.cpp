@@ -1,5 +1,4 @@
 #include "UnrealMCPModule.h"
-#include "UnrealMCPBridge.h"
 #include "Modules/ModuleManager.h"
 #include "EditorSubsystem.h"
 #include "Editor.h"
@@ -8,14 +7,14 @@
 
 void FUnrealMCPModule::StartupModule()
 {
-	UE_LOG(LogTemp, Display, TEXT("Unreal MCP Module has started"));
+    UE_LOG(LogTemp, Display, TEXT("Unreal MCP Module has started"));
 }
 
 void FUnrealMCPModule::ShutdownModule()
 {
-	UE_LOG(LogTemp, Display, TEXT("Unreal MCP Module has shut down"));
+    UE_LOG(LogTemp, Display, TEXT("Unreal MCP Module has shut down"));
 }
 
 #undef LOCTEXT_NAMESPACE
-	
-IMPLEMENT_MODULE(FUnrealMCPModule, UnrealMCP) 
+
+IMPLEMENT_MODULE(FUnrealMCPModule, UnrealMCP)

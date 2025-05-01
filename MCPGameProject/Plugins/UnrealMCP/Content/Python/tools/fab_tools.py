@@ -1,4 +1,4 @@
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 import requests
 import tempfile
@@ -9,7 +9,16 @@ from loci_utils import (
     S3_BUCKET,
     S3_CLIENT,
 )
-from .utils.search import Asset, get_asset_index, search
+
+
+@dataclass
+class Asset:
+    uid: str
+    title: str
+    asset_s3_path: str
+
+
+# , get_asset_index, search
 
 from mcp.server.fastmcp import Context, FastMCP
 

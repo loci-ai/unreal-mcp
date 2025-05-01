@@ -8,10 +8,6 @@
 			"name": "UE5",
 			"path": "/home/jack/Unreal"
 		}
-        {
-            "name": "Python MCP",
-            "path": "/home/jack/Loci/unreal-mcp/Python"
-        }
 	],
 	"settings": {
 		"typescript.tsc.autoDetect": "off",

@@ -10,9 +10,9 @@ class UNREALMCP_API UPythonExtension : public UObject
     GENERATED_BODY()
 
 public:
-    UFUNCTION(BlueprintCallable, Category="Python")
-    static void LaunchScriptOnGameThread(const FString& PythonCode);
+    UFUNCTION(BlueprintCallable, Category = "Python")
+    static void LaunchScriptOnGameThread(const FString &PythonCode);
 
-    UFUNCTION(BlueprintCallable, Category="Python")
+    UFUNCTION(BlueprintCallable, Category = "Python")
     static bool IsInGameThread();
 };

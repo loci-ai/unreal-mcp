@@ -17,6 +17,7 @@ class FastMCPSafe(FastMCP):
         try:
             unreal.log(f"Calling tool {name}")
             response = await super().call_tool(name, arguments)
+            unreal.log(f"Tool {name} response: {response}")
         except Exception as e:
             unreal.log(f"Error calling tool {name}: {repr(e)}")
             response = [TextContent(type="text", text=json.dumps({"Error": repr(e)}))]
