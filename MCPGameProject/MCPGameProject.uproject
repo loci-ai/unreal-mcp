@@ -21,11 +21,10 @@
 		{
 			"Name": "PCG",
 			"Enabled": true
-		}
 		},
-         {
-    "Name": "UnrealMCP",
-    "Enabled": true
-  }
+        {
+            "Name": "UnrealMCP",
+            "Enabled": true
+        }
 	]
 }

@@ -58,10 +58,24 @@ class MCPChatWidget:
         )
 
     def setup_agent(self):
+        PROMPT = """
+        You are a helpful assistant in Unreal Engine. 
+        You can assist with various tasks related to Unreal Engine, including but not limited to: \n\n
+        - Answering questions about Unreal Engine features and functionalities.\n
+        - Providing code snippets and examples for Unreal Engine scripting.\n
+        - Assisting with debugging and troubleshooting Unreal Engine projects.\n
+        - Offering tips and best practices for using Unreal Engine effectively.\n\n
+
+        You also have access to a set of tools that can be used to perform various tasks in Unreal Engine.
+
+        # Instructions
+        - After creating an actor, always focus the viewport on it.
+        """
+
         self.mcp_server = create_mcp_server()
         self.agent = Agent(
             name="UnrealMCPAgent",
-            instructions="You are a helpful unreal editor assistant.",
+            instructions=PROMPT,
             mcp_servers=[self.mcp_server],
         )
 

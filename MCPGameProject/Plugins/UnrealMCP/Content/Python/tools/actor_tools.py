@@ -4,6 +4,7 @@ Actor Tools for Unreal MCP.
 This module provides tools for creating, manipulating, and inspecting actors in Unreal Engine.
 """
 
+import logging
 import unreal
 
 from typing import Dict, List, Any, Literal
@@ -11,7 +12,7 @@ from mcp.server.fastmcp import FastMCP, Context
 
 from runner import GameThreadRunner
 from .utils.terrain_generation import create_heightmap
-
+logger = logging.getLogger("UnrealMCP")
 
 def get_actor_info(actor: unreal.Actor) -> Dict[str, Any]:
     mesh_component = actor.static_mesh_component
@@ -35,16 +36,17 @@ def get_actor_info(actor: unreal.Actor) -> Dict[str, Any]:
         origin.y + box_extent.y,
         origin.z + box_extent.z,
     ]
-
+    actor.get_actor_label()
     info = {
         "name": actor.get_name(),
+        "path_name": actor.get_path_name().split(":")[-1],
         "label": actor.get_actor_label(),
         "mesh_name": mesh.get_name() if mesh else None,
         "mesh_path": mesh.get_path_name() if mesh else None,
         "location": [location.x, location.y, location.z],
         "rotation": [rotation.pitch, rotation.yaw, rotation.roll],
         "scale": [scale.x, scale.y, scale.z],
-        "tags": actor.tags,
+        # "tags": actor.tags,
         "bounds": {
             "origin": [origin.x, origin.y, origin.z],
             "extent": [box_extent.x, box_extent.y, box_extent.z],
@@ -54,6 +56,8 @@ def get_actor_info(actor: unreal.Actor) -> Dict[str, Any]:
     }
 
     return info
+
+
 
 
 def register_actor_tools(mcp: FastMCP):
@@ -107,16 +111,16 @@ def register_actor_tools(mcp: FastMCP):
         if name:
             actor.set_actor_label(name)
 
-        return {"success": True, "actor_name": "{}".format(actor.get_name())}
+        return {"success": True, "actor_info": get_actor_info(actor)}
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
     def delete_object(
         ctx: Context,
-        actor_name: str,
+        path_name: str,
     ) -> Dict[str, Any]:
-        """Deletes an actor by name."""
-        actor = unreal.EditorLevelLibrary.get_actor_reference(actor_name)
+        """Deletes an actor by path name."""
+        actor = unreal.EditorLevelLibrary.get_actor_reference(path_name)
         if actor:
             unreal.EditorLevelLibrary.destroy_actor(actor)
             return {"success": True}
@@ -127,32 +131,35 @@ def register_actor_tools(mcp: FastMCP):
     @GameThreadRunner.run_on_main_thread
     def modify_actor(
         ctx: Context,
-        actor_name: str,
+        path_name: str,
         location: List[float] | None = None,
         rotation: List[float] | None = None,
         scale: List[float] | None = None,
     ) -> Dict[str, Any]:
         """Modifies an actor's transform."""
-        actor = unreal.EditorLevelLibrary.get_actor_reference(actor_name)
+        actor = unreal.EditorLevelLibrary.get_actor_reference(path_name)
         if not actor:
             return {"success": False, "error": "Actor not found"}
 
         if location:
-            actor.set_actor_location(unreal.Vector(*location))
+            actor.set_actor_location(new_location=unreal.Vector(*location), sweep=False, teleport=True)
         if rotation:
-            actor.set_actor_rotation(unreal.Rotator(*rotation))
+            actor.set_actor_rotation(new_rotation=unreal.Rotator(*rotation), teleport_physics=True)
         if scale:
             actor.set_actor_scale3d(unreal.Vector(*scale))
 
-        return {"success": True}
+        return {"success": True, "actor_info": get_actor_info(actor)}
+
+
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
     def get_all_static_mesh_actors_info() -> List[Dict[str, Any]]:
         """Returns detailed info about all StaticMeshActors in the current level, including bounding boxes."""
 
-        actors = unreal.EditorLevelLibrary.get_all_level_actors()
+        actors = unreal.EditorActorSubsystem().get_all_level_actors()
         results = []
+        logger.info("HI")
 
         for actor in actors:
             if not isinstance(actor, unreal.StaticMeshActor):
