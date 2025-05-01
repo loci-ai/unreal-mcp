@@ -4,13 +4,14 @@ Editor Tools for Unreal MCP.
 This module provides tools for controlling the Unreal Editor viewport and other editor functionality.
 """
 
-import unreal
+import os
+from typing import Any, Dict, List, Optional
 
-from typing import Dict, List, Any, Optional
-from mcp.server.fastmcp import FastMCP, Context
+import unreal
+from mcp.server.fastmcp import Context, FastMCP
+from runner import GameThreadRunner
 
 from .utils.responses import Responses
-from runner import GameThreadRunner
 
 
 def register_editor_tools(mcp: FastMCP):
@@ -120,7 +121,7 @@ def register_editor_tools(mcp: FastMCP):
         interchange_manager = (
             unreal.InterchangeManager.get_interchange_manager_scripted()
         )
-        destination_path = "/Game/ImportedGLB/"
+        destination_path = f"/Game/Imported{import_extension.upper()}/"
         if asset_category:
             destination_path += f"{asset_category}/"
         destination_path += unreal.Paths.get_base_filename(asset_path)
@@ -132,3 +133,35 @@ def register_editor_tools(mcp: FastMCP):
 
         editor_asset_subsystem.delete_directory(transient_path)
         return Responses.create_success_response({"import_dest_path": destination_path})
+
+    @mcp.tool()
+    def view_image(ctx: Context, image_path: str) -> Dict[str, Any]:
+        """
+        View an Unreal texture image in a 2D image viewing window.
+        Args:
+            image_path (str): The path to the image in the Unreal filesystem to view.
+        Returns:
+            Response from Unreal Engine
+        """
+
+        try:
+            if not image_path.startswith(
+                ("Game", "/Game")
+            ):  # image has not been imported into UE yet
+                unreal.log(f"Importing image into UE")
+                response = import_asset(ctx=ctx, asset_path=image_path)
+                import_dest_path = response["import_dest_path"]
+                unreal.log(f"import_dest_path: {import_dest_path}")
+                filename = os.path.basename(import_dest_path).split(".")[0]
+                image_path = f"{import_dest_path}/{filename}.{filename}"
+          
+
+            unreal.log(f"BIG UPS viewing image: {image_path}")
+            params = {"image_path": image_path}
+
+            response = GameThreadRunner.run_cpp_command("view_image", params)
+            return response or {}
+
+        except Exception as e:
+            unreal.log(f"Error viewing image: {e}")
+            return {"status": "error", "message": str(e)}

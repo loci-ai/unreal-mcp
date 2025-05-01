@@ -1,17 +1,13 @@
+import tempfile
 from dataclasses import asdict
 from pathlib import Path
-import requests
-import tempfile
 from urllib.parse import urlparse
 
-from loci_utils import (
-    MONGO_MASTER_ASSET_COLLECTION,
-    S3_BUCKET,
-    S3_CLIENT,
-)
-from .utils.search import Asset, get_asset_index, search
-
+import requests
+from loci_utils import LOCI_ASSETS_S3_BUCKET, MONGO_MASTER_ASSET_COLLECTION, S3_CLIENT
 from mcp.server.fastmcp import Context, FastMCP
+
+from .utils.search import Asset, get_asset_index, search
 
 MAX_RESULTS = 5
 FAB_SEARCH_URL = "https://www.fab.com/i/listings/search"
@@ -212,7 +208,7 @@ def register_fab_tools(mcp: FastMCP):
                 local_path = Path(temp_dir) / file_name
 
                 # Download the file
-                S3_CLIENT.download_file(S3_BUCKET, s3_key, str(local_path))
+                S3_CLIENT.download_file(LOCI_ASSETS_S3_BUCKET, s3_key, str(local_path))
 
             except Exception as e:
                 return {"error": f"Failed to download model: {str(e)}"}

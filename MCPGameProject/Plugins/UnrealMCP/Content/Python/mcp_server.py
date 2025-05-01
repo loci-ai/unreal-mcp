@@ -38,6 +38,11 @@ def create_mcp_server():
         return """
         
         ## Best Practices
+
+        ### AI 3D model generation
+        - Before generating a 3D model, show the image to the user 
+        and check if they want to make any changes
+
         ### Actor Creation and Management
         - Check if the actor already exists before creating a new one, especially landscapes
         - Location is specified as [x, y, z] in Unreal units
