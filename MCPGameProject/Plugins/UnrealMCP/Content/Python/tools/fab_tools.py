@@ -4,7 +4,7 @@ import requests
 import tempfile
 from urllib.parse import urlparse
 
-from .utils.loci_utils import (
+from loci_utils import (
     MONGO_MASTER_ASSET_COLLECTION,
     S3_BUCKET,
     S3_CLIENT,
