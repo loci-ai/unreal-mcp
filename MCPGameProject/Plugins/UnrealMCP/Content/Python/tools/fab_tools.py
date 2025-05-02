@@ -1,29 +1,31 @@
-from dataclasses import asdict, dataclass
-from pathlib import Path
 import requests
 import tempfile
+import unreal
+
+from dataclasses import asdict, dataclass
+from pathlib import Path
 from urllib.parse import urlparse
 
 from loci_utils import (
     MONGO_MASTER_ASSET_COLLECTION,
-    S3_BUCKET,
+    LOCI_ASSETS_S3_BUCKET,
     S3_CLIENT,
+    LOCI_MASTER_API_KEY,
 )
+from mcp.server.fastmcp import Context, FastMCP
+
+from .utils.responses import Responses
+
+
+MAX_RESULTS = 5
+FAB_SEARCH_URL = "https://www.fab.com/i/listings/search"
 
 
 @dataclass
 class Asset:
     uid: str
     title: str
-    asset_s3_path: str
-
-
-# , get_asset_index, search
-
-from mcp.server.fastmcp import Context, FastMCP
-
-MAX_RESULTS = 5
-FAB_SEARCH_URL = "https://www.fab.com/i/listings/search"
+    asset_s3_path: str = None
 
 
 def get_mongo_assets(key_uid: str, key_title: str, uids: list[str]) -> list[Asset]:
@@ -59,7 +61,7 @@ def get_mongo_assets(key_uid: str, key_title: str, uids: list[str]) -> list[Asse
         return assets
 
     except Exception as e:
-        print(f"Error filtering asset IDs in MongoDB: {e}")
+        unreal.warning(f"Error filtering asset IDs in MongoDB: {e}")
         return []
 
 
@@ -120,7 +122,9 @@ def register_fab_tools(mcp: FastMCP):
                     break
 
         assets = [asdict(a) for a in assets[:max_results]]
-        return {"assets": assets, "returned_count": len(assets)}
+        return Responses.create_success_response(
+            {"assets": assets, "returned_count": len(assets)}
+        )
 
     @mcp.tool()
     def search_loci_assets(
@@ -138,66 +142,38 @@ def register_fab_tools(mcp: FastMCP):
             "returned_count" is the number of assets returned.
         """
 
-        try:
+        url = "https://dev.loci-api.com/3d/search"
+        params = {
+            "page_size": max_results,
+            "page_number": 1,
+            "should_translate": "false",
+            "debug": "true",
+        }
+        headers = {
+            "accept": "application/json",
+            "x-api-key": LOCI_MASTER_API_KEY,
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+        data = {
+            "text_query": text_query,
+            "model_name": "loci",
+            "similarity_threshold": 0.5,
+        }
 
-            index = get_asset_index()
-            assets = search(query=text_query, index=index, k=max_results)
-            assets = [asdict(a) for a in assets]
-            return {"assets": assets, "returned_count": len(assets)}
+        response = requests.post(url, headers=headers, params=params, data=data)
+        results = response.json().get("hits")
+        results = sorted(results, key=lambda x: x["similarity"], reverse=True)
+        results_uids = [h["asset_id"] for h in results]
 
-        except Exception as e:
-            return {"error": f"FAB search failed: {str(e)}"}
-
-    # @mcp.tool()
-    # def search_loci_assets(
-    #     ctx: Context, text_query=None, max_results: int = MAX_RESULTS
-    # ):
-    #     """Search assets in LOCI.
-    #     Args:
-    #         ctx: The MCP context
-    #         text_query: Query string to search
-    #         max_results: Maximum number of results to return
-
-    #     Returns:
-    #         Dict containing keys "assets" and "returned_count"
-    #         "assets" is a list of dictionaries with keys "uid", "title", and "asset_s3_path".
-    #         "returned_count" is the number of assets returned.
-    #     """
-
-    #     try:
-    #         url = "https://dev.loci-api.com/3d/search"
-    #         params = {
-    #             "page_size": max_results,
-    #             "page_number": 1,
-    #             "should_translate": "false",
-    #             "debug": "true",
-    #         }
-    #         headers = {
-    #             "accept": "application/json",
-    #             "x-api-key": LOCI_API_KEY,
-    #             "Content-Type": "application/x-www-form-urlencoded",
-    #         }
-    #         data = {
-    #             "text_query": text_query,
-    #             "model_name": "loci",
-    #             "similarity_threshold": 0.5,
-    #         }
-
-    #         response = requests.post(url, headers=headers, params=params, data=data)
-    #         results = response.json().get("hits")
-    #         results = sorted(results, key=lambda x: x["similarity"], reverse=True)
-    #         results_uids = [h["asset_id"] for h in results]
-
-    #         assets = get_mongo_assets(
-    #             key_uid="source_id",
-    #             key_title="asset_name",
-    #             uids=results_uids,
-    #         )
-    #         assets = [asdict(a) for a in assets[:max_results]]
-    #         return {"assets": assets, "returned_count": len(assets)}
-
-    #     except Exception as e:
-    #         return {"error": f"FAB search failed: {str(e)}"}
+        assets = get_mongo_assets(
+            key_uid="source_id",
+            key_title="asset_name",
+            uids=results_uids,
+        )
+        assets = [asdict(a) for a in assets[:max_results]]
+        return Responses.create_success_response(
+            {"assets": assets, "returned_count": len(assets)}
+        )
 
     @mcp.tool()
     def download_s3_asset(ctx: Context, asset_s3_path: str):
@@ -206,31 +182,17 @@ def register_fab_tools(mcp: FastMCP):
             ctx: The MCP context
             asset_s3_path: S3 URI of the asset to download
         Returns:
-            Dict containing keys "status", "message", and "file_path"
-            "status" indicates success or failure
-            "message" provides additional information
+            Dict containing keys "file_path"
             "file_path" is the local path to the downloaded asset
         """
-        try:
-            temp_dir = tempfile.mkdtemp()
-            try:
-                # Parse the S3 URI
-                parsed = urlparse(asset_s3_path)
-                s3_key = parsed.path.lstrip("/")
-                file_name = Path(s3_key).name
-                local_path = Path(temp_dir) / file_name
+        temp_dir = tempfile.mkdtemp()
+        # Parse the S3 URI
+        parsed = urlparse(asset_s3_path)
+        s3_key = parsed.path.lstrip("/")
+        file_name = Path(s3_key).name
+        local_path = Path(temp_dir) / file_name
 
-                # Download the file
-                S3_CLIENT.download_file(S3_BUCKET, s3_key, str(local_path))
+        # Download the file
+        S3_CLIENT.download_file(LOCI_ASSETS_S3_BUCKET, s3_key, str(local_path))
 
-            except Exception as e:
-                return {"error": f"Failed to download model: {str(e)}"}
-
-            return {
-                "status": "success",
-                "message": "Asset downloaded successfully",
-                "file_path": local_path,
-            }
-
-        except Exception as e:
-            return {"error": f"Failed to download asset: {str(e)}"}
+        return Responses.create_success_response({"file_path": local_path})
