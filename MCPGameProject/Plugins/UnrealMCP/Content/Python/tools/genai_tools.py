@@ -38,7 +38,7 @@ def register_genai_tools(mcp: FastMCP):
             # ------------------------------- text to image ------------------------------ #
             text_to_image_url = "https://dev.loci-api.com/image/generate"
 
-            data = {"prompt": text_prompt}
+            data = {"prompt": text_prompt, "positive_prompt": ""}
 
             image_response = requests.post(
                 text_to_image_url, headers=headers, data=data

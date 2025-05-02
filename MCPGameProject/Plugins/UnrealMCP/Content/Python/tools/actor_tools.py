@@ -92,36 +92,29 @@ def register_actor_tools(mcp: FastMCP):
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
-    def create_primative_static_mesh_actor(
+    def spawn_static_mesh_actor(
         ctx: Context,
-        shape_type: Literal["cube", "sphere", "cone", "cylinder", "plane"],
+        asset_path: str,
         name: str | None = None,
         location: List[float] = [0.0, 0.0, 0.0],
         rotation: List[float] = [0.0, 0.0, 0.0],
         scale: List[float] = [1.0, 1.0, 1.0],
     ) -> Dict[str, Any]:
         """Creates a StaticMeshActor using a built-in primitive shape.
-        The Rotation is specified as pitch (around Y axis), roll (around X axis), yaw (around Z axis) in degrees.
+
+        Args:
+            asset_path (str): The path to the static mesh asset. The path can either be a path to a primative shape ("/Engine/BasicShapes/Cube.Cube", "/Engine/BasicShapes/Sphere.Sphere", "/Engine/BasicShapes/Cone.Cone", "/Engine/BasicShapes/Cylinder.Cylinder", "/Engine/BasicShapes/Plane.Plane") or the path to a GLB mesh.
+            name (str | None): Optional name for the actor.
+            location (List[float]): The location to spawn the actor at.
+            rotation (List[float]): The rotation of the actor. The Rotation is specified as pitch (around Y axis), roll (around X axis), yaw (around Z axis) in degrees.
+            scale (List[float]): The scale of the actor.
+        Returns:
+            Dict[str, Any]: A dictionary containing the success status and actor info.
         """
-
-        PRIMITIVE_MESH_PATHS = {
-            "cube": "/Engine/BasicShapes/Cube.Cube",
-            "sphere": "/Engine/BasicShapes/Sphere.Sphere",
-            "cone": "/Engine/BasicShapes/Cone.Cone",
-            "cylinder": "/Engine/BasicShapes/Cylinder.Cylinder",
-            "plane": "/Engine/BasicShapes/Plane.Plane",
-        }
-
-        asset_path = PRIMITIVE_MESH_PATHS.get(shape_type)
-
-        if not asset_path:
-            raise ValueError(f"Unsupported primitive shape: {shape_type}")
 
         static_mesh = unreal.EditorAssetLibrary.load_asset(asset_path)
         if not static_mesh:
-            raise RuntimeError(
-                f"Failed to load mesh asset for '{shape_type}' at {asset_path}"
-            )
+            raise RuntimeError(f"Failed to load mesh asset for at {asset_path}")
 
         # Spawn a StaticMeshActor
         location = unreal.Vector(*location)
@@ -180,41 +173,6 @@ def register_actor_tools(mcp: FastMCP):
             actor.set_actor_scale3d(unreal.Vector(*scale))
 
         return {"success": True, "actor_info": get_actor_info(actor)}
-
-    @mcp.tool()
-    @GameThreadRunner.run_on_main_thread
-    def spawn_imported_static_mesh_actor(
-        ctx: Context,
-        asset_path: str,
-        name: str | None = None,
-        location=[0.0, 0.0, 0.0],
-        rotation=[0.0, 0.0, 0.0],
-        scale=[1.0, 1.0, 1.0],
-    ):
-        """Spawns an imported StaticMesh (e.g., from a GLB) into the level."""
-
-        # Load the StaticMesh
-        static_mesh = unreal.EditorAssetLibrary.load_asset(asset_path)
-        if not static_mesh:
-            raise RuntimeError(f"Static mesh not found at: {asset_path}")
-
-        # Spawn the actor
-        loc = unreal.Vector(*location)
-        rot = unreal.Rotator(*rotation)
-        actor = unreal.EditorLevelLibrary.spawn_actor_from_class(
-            unreal.StaticMeshActor, loc, rot
-        )
-
-        # Set mesh and transform
-        actor.static_mesh_component.set_static_mesh(static_mesh)
-        actor.set_actor_scale3d(unreal.Vector(*scale))
-
-        # Optionally rename
-        if name:
-            actor.set_actor_label(name)
-
-        unreal.log(f"Spawned {asset_path} into scene as {actor.get_actor_label()}")
-        return actor
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
