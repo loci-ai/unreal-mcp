@@ -90,7 +90,7 @@ def register_placement_tools(mcp: FastMCP):
             bounds.max.y - bounds.min.y,
             bounds.max.z - bounds.min.z,
         )
-        scale = scale / max_dim * 100.0
+        scale = scale / max_dim * 10.0
 
         loc_v = unreal.Vector(*location)
         rot_v = unreal.Rotator(0.0, 0.0, rotation)
@@ -198,7 +198,7 @@ def register_placement_tools(mcp: FastMCP):
                 bounds.max.y - bounds.min.y,
                 bounds.max.z - bounds.min.z,
             )
-            scale_ = scale / max_dim * 100.0
+            scale_ = scale / max_dim * 10.0
             loc_v = unreal.Vector(*loc)
             rot_v = unreal.Rotator(0.0, 0.0, rot)
             scale_v = unreal.Vector(scale_, scale_, scale_)
