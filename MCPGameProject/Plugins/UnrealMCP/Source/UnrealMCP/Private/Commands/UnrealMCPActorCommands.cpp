@@ -31,6 +31,7 @@
 #include "LandscapeComponent.h"
 #include "LandscapeEdit.h"
 #include "LandscapeConfigHelper.h"
+#include "LandscapeSubsystem.h"
 #include "UObject/SoftObjectPath.h"
 #include "Containers/Ticker.h"
 
