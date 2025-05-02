@@ -31,6 +31,7 @@ LOCI_ASSETS_S3_BUCKET = "loci-assets"
 ASSET_DOWNLOADS_S3_BUCKET = "loci-asset-downloads-dev"
 
 LOCI_MASTER_API_KEY = SECRETS_DICT["LOCI_MASTER_API_KEY"]
+LOCI_SEARCH_COLLECTION_API_KEY = "loci.CivE38cW_FEJkdDGzqXeCQ"
 
 
 def setup_env_variables():

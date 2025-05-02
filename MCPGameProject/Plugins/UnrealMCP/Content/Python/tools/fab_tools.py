@@ -10,7 +10,7 @@ from loci_utils import (
     MONGO_MASTER_ASSET_COLLECTION,
     LOCI_ASSETS_S3_BUCKET,
     S3_CLIENT,
-    LOCI_MASTER_API_KEY,
+    LOCI_SEARCH_COLLECTION_API_KEY,
 )
 from mcp.server.fastmcp import Context, FastMCP
 
@@ -151,7 +151,7 @@ def register_fab_tools(mcp: FastMCP):
         }
         headers = {
             "accept": "application/json",
-            "x-api-key": LOCI_MASTER_API_KEY,
+            "x-api-key": LOCI_SEARCH_COLLECTION_API_KEY,
             "Content-Type": "application/x-www-form-urlencoded",
         }
         data = {

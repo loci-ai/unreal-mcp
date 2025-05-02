@@ -49,6 +49,9 @@ Make the middle one green instead!
 
 # Now pull in a few other monsters from fab
 
+
+
+Get 5 nordic mossy rocks using Loci Semantic Search
 ------
 # What is in my scene?
 
@@ -60,3 +63,4 @@ Make the middle one green instead!
 
 
 # Pull assets from FAB
+
