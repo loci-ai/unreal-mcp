@@ -27,7 +27,6 @@
 #include "EditorScriptingUtilities/Public/EditorAssetLibrary.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Misc/FileHelper.h"
-#include "HAL/PlatformFilemanager.h"
 #include "Landscape.h"
 #include "LandscapeComponent.h"
 #include "LandscapeEdit.h"

@@ -18,4 +18,5 @@ private:
     // Specific editor command handlers
     TSharedPtr<FJsonObject> HandleFocusViewport(const TSharedPtr<FJsonObject>& Params);
     TSharedPtr<FJsonObject> HandleTakeScreenshot(const TSharedPtr<FJsonObject>& Params);
+    TSharedPtr<FJsonObject> HandleViewImage(const TSharedPtr<FJsonObject>& Params);
 }; 

@@ -7,6 +7,12 @@
 #include "HighResScreenshot.h"
 #include "Engine/GameViewportClient.h"
 #include "Misc/FileHelper.h"
+#include "ToolMenus.h"
+#include "UObject/SoftObjectPath.h"
+
+#if WITH_EDITOR
+#include "Subsystems/AssetEditorSubsystem.h"
+#endif
 
 FUnrealMCPEditorCommands::FUnrealMCPEditorCommands()
 {
@@ -17,6 +23,10 @@ TSharedPtr<FJsonObject> FUnrealMCPEditorCommands::HandleCommand(const FString& C
     if (CommandType == TEXT("focus_viewport"))
     {
         return HandleFocusViewport(Params);
+    }
+    else if (CommandType == TEXT("view_image"))
+    {
+        return HandleViewImage(Params);
     }
     else if (CommandType == TEXT("take_screenshot"))
     {
@@ -74,3 +84,36 @@ TSharedPtr<FJsonObject> FUnrealMCPEditorCommands::HandleTakeScreenshot(const TSh
     
     return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to take screenshot"));
 } 
+
+
+TSharedPtr<FJsonObject> FUnrealMCPEditorCommands::HandleViewImage(const TSharedPtr<FJsonObject>& Params)
+{
+    FString ImagePath;
+    if (!Params->TryGetStringField(TEXT("image_path"), ImagePath))
+    {
+        return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Missing 'image_path' parameter"));
+    }
+    FSoftObjectPath SoftPath(ImagePath);
+    UE_LOG(LogTemp, Display, TEXT("Successfull FSoftObjectPath SoftPath(ImagePath"));
+
+    UObject* Image = SoftPath.TryLoad();
+    UE_LOG(LogTemp, Display, TEXT("Successfull UObject* Image = SoftPath.TryLoad()"));
+
+    if (Image && GEditor)
+    {
+        if (UAssetEditorSubsystem* EditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>())
+        {
+            UE_LOG(LogTemp, Display, TEXT("Success UAssetEditorSubsystem* EditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem"));
+            
+            EditorSubsystem->OpenEditorForAsset(ImagePath);
+        }
+
+        UE_LOG(LogTemp, Display, TEXT("Big ol success"));
+
+        TSharedPtr<FJsonObject> ResultObj = MakeShared<FJsonObject>();
+        ResultObj->SetBoolField(TEXT("image_viewed"), true);
+        return ResultObj;
+    }
+    
+    return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to view image"));
+}

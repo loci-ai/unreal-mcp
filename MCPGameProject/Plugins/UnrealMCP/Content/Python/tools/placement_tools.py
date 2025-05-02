@@ -25,8 +25,8 @@ def register_placement_tools(mcp: FastMCP):
         asset_path: str,
         name: str,
         location: List[float],
-        rotation: Optional[float] = None,
-        scale: Optional[float] = None,
+        rotation: Optional[float] = 0,
+        scale: Optional[float] = 1,
     ):
         """Place an actor in the level. The mesh used will first be scaled
          down to unit cube, and then scaled up to the specified scale.
