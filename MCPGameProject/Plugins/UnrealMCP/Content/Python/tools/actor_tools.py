@@ -5,6 +5,9 @@ This module provides tools for creating, manipulating, and inspecting actors in 
 """
 
 import logging
+from .editor_tools import (
+    import_file_if_required,
+)
 import unreal
 
 from typing import Dict, List, Any, Literal
@@ -111,7 +114,8 @@ def register_actor_tools(mcp: FastMCP):
         Returns:
             Dict[str, Any]: A dictionary containing the success status and actor info.
         """
-
+        asset_path = import_file_if_required(asset_path)
+        print(f"HEREEE - {asset_path}")
         static_mesh = unreal.EditorAssetLibrary.load_asset(asset_path)
         if not static_mesh:
             raise RuntimeError(f"Failed to load mesh asset for at {asset_path}")

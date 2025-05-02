@@ -7,11 +7,113 @@ This module provides tools for controlling the Unreal Editor viewport and other 
 import unreal
 
 import os
+from os.path import join
 from typing import Dict, List, Any, Optional
 from mcp.server.fastmcp import FastMCP, Context
 
 from .utils.responses import Responses
 from runner import GameThreadRunner
+
+
+def import_file_if_required(
+    file_path: str,
+    asset_category: Optional[str] = None,
+    destination_root: str = "/Game/ImportedAssets/",
+) -> str:
+    """
+    Imports a GLB, or image file (PNG, JPG, etc.) into Unreal Engine.
+    Args:
+        file_path (str): The source file path on disk.
+        asset_category (Optional[str]): Optional subfolder under the destination path.
+        destination_root (str): Base destination path in the Content Browser.
+    Returns:
+        A dict with the imported Unreal asset path or an error.
+    """
+    if file_path.startswith("/Game"):
+        return file_path
+
+    if not os.path.isfile(file_path):
+        raise ValueError(f"File does not exist: {file_path}")
+
+    if asset_category is not None:
+        destination_root = join(destination_root, asset_category)
+
+    # Ensure the extension is correct
+    extension = os.path.splitext(file_path)[1].lower()
+
+    is_glb = extension in [".glb"]
+    is_image = extension in [".png", ".jpg"]
+    asset_name = os.path.splitext(os.path.basename(file_path))[0]
+
+    # Ensure destination path ends with a slash
+    if not destination_root.endswith("/"):
+        destination_root = destination_root + "/"
+    if is_glb:
+
+        # Get asset name from file path
+
+        import_task = unreal.AssetImportTask()
+        import_task.filename = file_path
+        import_task.destination_path = destination_root
+        import_task.destination_name = asset_name
+        import_task.replace_existing = True
+        import_task.automated = True
+        import_task.save = True
+
+        # Import the asset using the asset tools
+        asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+        asset_tools.import_asset_tasks([import_task])
+
+        # Get the imported object paths
+        imported_paths = import_task.get_editor_property("imported_object_paths")
+
+        # Check if import was successful
+        if not imported_paths:
+            unreal.log_error(f"Failed to import GLB file: {file_path}")
+            return None
+
+        # Find the static mesh in the imported objects
+        static_mesh_path = None
+        editor_asset_subsystem = unreal.get_editor_subsystem(
+            unreal.EditorAssetSubsystem
+        )
+
+        for path in imported_paths:
+            asset = editor_asset_subsystem.load_asset(path)
+            if isinstance(asset, unreal.StaticMesh):
+                static_mesh_path = path
+                break
+
+        if not static_mesh_path:
+            unreal.log_warning(
+                f"No static mesh was found in the imported assets. Paths: {imported_paths}"
+            )
+            # Return the first path if no specific static mesh was found
+            return imported_paths[0] if imported_paths else None
+
+        return static_mesh_path
+    elif is_image:
+        # Use AssetImportTask for images
+        task = unreal.AssetImportTask()
+        task.filename = file_path
+        task.destination_path = join(destination_root, asset_name)
+        task.destination_name = asset_name
+        task.automated = True
+        task.save = True
+        task.replace_existing = True
+
+        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+
+        # Get the imported object paths
+        imported_paths = task.get_editor_property("imported_object_paths")
+        if not imported_paths:
+            raise Exception("Failed to import image file.")
+
+        # Return the actual imported path
+        return imported_paths[0]
+
+    else:
+        raise Exception(f"Unsupported file type: {extension}")
 
 
 def register_editor_tools(mcp: FastMCP):
@@ -54,120 +156,8 @@ def register_editor_tools(mcp: FastMCP):
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
-    def import_file(
-        ctx: Context,
-        file_path: str,
-        asset_category: Optional[str] = None,
-        destination_root: str = "/Game/ImportedAssets/",
-    ) -> Dict[str, Any]:
-        """
-        Imports a GLB, FBX, or image file (PNG, JPG, etc.) into Unreal Engine.
-        Args:
-            file_path (str): The source file path on disk.
-            asset_category (Optional[str]): Optional subfolder under the destination path.
-            destination_root (str): Base destination path in the Content Browser.
-        Returns:
-            A dict with the imported Unreal asset path or an error.
-        """
-
-        if not os.path.isfile(file_path):
-            raise ValueError(f"File does not exist: {file_path}")
-
-        # Determine file type
-        extension = unreal.Paths.get_extension(file_path, False).lower()
-        is_gltf = extension in ("glb", "gltf")
-        is_fbx = extension == "fbx"
-        is_image = extension in ("png", "jpg", "jpeg", "tga", "bmp", "exr", "psd")
-
-        # Build destination path
-        asset_name = unreal.Paths.get_base_filename(file_path)
-        destination_path = destination_root
-        if asset_category:
-            destination_path += f"{asset_category}/"
-        destination_path += asset_name
-
-        if is_gltf or is_fbx:
-            # Enable FBX Interchange if necessary
-            if is_fbx:
-                level_editor_subsystem = unreal.get_editor_subsystem(
-                    unreal.LevelEditorSubsystem
-                )
-                unreal.SystemLibrary.execute_console_command(
-                    level_editor_subsystem.get_world(),
-                    "Interchange.FeatureFlags.Import.FBX true",
-                )
-
-            editor_asset_subsystem = unreal.get_editor_subsystem(
-                unreal.EditorAssetSubsystem
-            )
-            transient_path = "/Interchange/Pipelines/Transient/"
-            transient_pipeline_path = transient_path + "MyAutomationPipeline"
-
-            editor_asset_subsystem.delete_directory(transient_path)
-
-            default_pipeline = (
-                "/Interchange/Pipelines/DefaultGLTFAssetsPipeline"
-                if is_gltf
-                else "/Interchange/Pipelines/DefaultAssetsPipeline"
-            )
-
-            pipeline = editor_asset_subsystem.duplicate_asset(
-                default_pipeline, transient_pipeline_path
-            )
-
-            pipeline.mesh_pipeline.combine_static_meshes = True
-            pipeline.material_pipeline.import_materials = True
-            pipeline.material_pipeline.texture_pipeline.import_textures = True
-
-            source_data = unreal.InterchangeManager.create_source_data(file_path)
-
-            import_asset_parameters = unreal.ImportAssetParameters()
-            import_asset_parameters.is_automated = True
-            import_asset_parameters.override_pipelines.append(
-                unreal.SoftObjectPath(transient_pipeline_path + ".MyAutomationPipeline")
-            )
-            if is_gltf:
-                import_asset_parameters.override_pipelines.append(
-                    unreal.SoftObjectPath("/Interchange/Pipelines/DefaultGLTFPipeline")
-                )
-
-            interchange_manager = (
-                unreal.InterchangeManager.get_interchange_manager_scripted()
-            )
-            success = interchange_manager.import_asset(
-                destination_path, source_data, import_asset_parameters
-            )
-
-            editor_asset_subsystem.delete_directory(transient_path)
-
-            if not success:
-                return {"success": False, "error": "Failed to import GLB/FBX asset."}
-
-            return {"success": True, "imported_path": destination_path}
-
-        elif is_image:
-            # Use AssetImportTask for images
-            task = unreal.AssetImportTask()
-            task.filename = file_path
-            task.destination_path = os.path.dirname(destination_path)
-            task.automated = True
-            task.save = True
-            task.replace_existing = True
-
-            unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
-
-            imported_paths = task.get_editor_property("imported_object_paths")
-            if not imported_paths:
-                return {"success": False, "error": "Failed to import image file."}
-
-            return {"success": True, "imported_path": imported_paths[0]}
-
-        else:
-            return {"success": False, "error": f"Unsupported file type: {extension}"}
-
-    @mcp.tool()
-    @GameThreadRunner.run_on_main_thread
     def view_image(ctx: Context, image_path: str):
+        image_path = import_file_if_required(image_path)
         asset = unreal.EditorAssetLibrary.load_asset(image_path)
         if asset is None:
             unreal.log_error(f"Failed to load asset at path: {image_path}")

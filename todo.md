@@ -37,6 +37,18 @@ Ok make the terrain sandy and the cube metal
 Now make the cube a dark walnut wood
 
 Make the wood darker and instead of a cube, make a wooden table out of mesh primatives. Make the table top wood and the legs metal
+
+
+# Asset sources
+Generate a cute 3D puple monster with 3 eyes
+Duplicate 5 times with variation in scale
+Increase the gap between them
+
+Make the middle one green instead!
+
+
+# Now pull in a few other monsters from fab
+
 ------
 # What is in my scene?
 

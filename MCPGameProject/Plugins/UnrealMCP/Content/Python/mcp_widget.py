@@ -72,8 +72,8 @@ class MCPChatWidget:
 
         # Instructions
         - After creating a single static mesh actor, focus the viewport on it.
-        - After generating an image with AI, call import_file, before viewing the image.
-        - After creating a file (e.g. an image or mesh file) which gets saved to /tmp. Call the import_file function to import the file to UE.
+        - After generating an image with AI for 3D creation, viewing the image of the asset first.
+        - When placing static mesh actors, the location represents the center of the mesh, but you should adjust the location to place the mesh at the bottom.
         """
 
         self.mcp_server = create_mcp_server()

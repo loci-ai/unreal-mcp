@@ -19,7 +19,7 @@ def register_genai_tools(mcp: FastMCP):
 
         Args:
             ctx: The MCP context
-            text_prompt: The text prompt to generate an image from.
+            text_prompt: The text prompt to generate an image from. (Maximum 120 characters)
 
         Returns:
             Dict containing keys "status", "message", and "file_path"
@@ -38,7 +38,7 @@ def register_genai_tools(mcp: FastMCP):
             # ------------------------------- text to image ------------------------------ #
             text_to_image_url = "https://dev.loci-api.com/image/generate"
 
-            data = {"prompt": text_prompt, "positive_prompt": ""}
+            data = {"prompt": text_prompt[:120], "positive_prompt": ""}
 
             image_response = requests.post(
                 text_to_image_url, headers=headers, data=data
@@ -67,7 +67,9 @@ def register_genai_tools(mcp: FastMCP):
             return {"error": f"Failed to generate image from prompt: {str(e)}"}
 
     @mcp.tool()
-    def generate_asset_from_image(ctx: Context, image_path=None):
+    def generate_asset_from_image(
+        ctx: Context, image_path: str, generate_textures: bool = False
+    ):
         """Generate a 3D model from an image.
         Note: before generating the asset, show the image to the user
         and check if they want to make any changes
@@ -75,6 +77,7 @@ def register_genai_tools(mcp: FastMCP):
         Args:
             ctx: The MCP context
             image_path: The local path to the image.
+            generate_textures: Whether to generate textures for the asset.
 
         Returns:
             Dict containing keys "status", "message", and "file_path"
@@ -95,7 +98,7 @@ def register_genai_tools(mcp: FastMCP):
 
             files = {"file": open(file=image_path, mode="rb")}
 
-            data = {"model_name": "hunyuan", "generate_textures": False}
+            data = {"model_name": "hunyuan", "generate_textures": generate_textures}
 
             asset_response = requests.post(
                 image_to_3d_url, headers=headers, data=data, files=files
