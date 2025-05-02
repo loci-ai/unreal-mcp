@@ -156,11 +156,17 @@ def register_editor_tools(mcp: FastMCP):
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
-    def view_image(ctx: Context, image_path: str):
-        image_path = import_file_if_required(image_path)
-        asset = unreal.EditorAssetLibrary.load_asset(image_path)
+    def view_asset(ctx: Context, asset_path: str):
+        """
+        View an asset (e.g. static mesh, image, material etc) in the editor.
+        Args:
+            ctx: The MCP context
+            asset_path: The file path to the asset.
+        """
+        asset_path = import_file_if_required(asset_path)
+        asset = unreal.EditorAssetLibrary.load_asset(asset_path)
         if asset is None:
-            unreal.log_error(f"Failed to load asset at path: {image_path}")
+            unreal.log_error(f"Failed to load asset at path: {asset_path}")
             return {"sucess": False, "error": "Asset not found"}
 
         editor_subsystem = unreal.get_editor_subsystem(unreal.AssetEditorSubsystem)
