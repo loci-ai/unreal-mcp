@@ -18,9 +18,9 @@ def register_pcg_tools(mcp: FastMCP):
         actor_name: str,
         actor_location: list[float] = [504.0, 504.0],
         actor_box_extents: list[float] = [504.0, 504.0],
-        points_per_sq_meter: float = 5.0,
-        min_scale: float = 0.1,
-        max_scale: float = 0.2,
+        points_per_sq_meter: float = 10.0,
+        min_scale: float = 0.8,
+        max_scale: float = 1.2,
         min_rotation: float = 0.0,
         max_rotation: float = 360.0,
         seed: int = 42,
@@ -47,10 +47,12 @@ def register_pcg_tools(mcp: FastMCP):
                 and covers the entire landscape. z will always be 504.
             points_per_sq_meter: The point density for the PCG surface sampler.
                 Recommended between 1.0 (very sparse) to 100.0 (very dense)
-                (default: 5.0).
-            min_scale: Min scale for the mesh (default: 0.1)
-            max_scale: Max scale for the mesh (default: 0.2)
+                (default: 10.0).
+            min_scale: Min scale for the mesh (default: 0.8)
+            max_scale: Max scale for the mesh (default: 1.2)
                 Each point is scaled randomly between min_scale and max_scale
+                Meshes are scaled to a 10cmx10cm box first and then scaled by the
+                given scales, so for a tree ~1.0 is good, rock might be 0.5 etc.
             min_rotation: Min z rotation for the mesh (default: 0.0)
             max_rotation: Max z rotation for the mesh (default: 360.0)
                 Each point is rotated randomly between min_rotation and max_rotation
@@ -72,6 +74,13 @@ def register_pcg_tools(mcp: FastMCP):
             loaded = unreal.EditorAssetLibrary.load_asset(asset_path)
             if isinstance(loaded, (unreal.StaticMesh, unreal.SkeletalMesh)):
                 mesh_assets.append(loaded)
+
+        dims = []
+        for mesh in mesh_assets:
+            _, size = mesh.get_bounding_box().get_box_center_size()
+            unreal.log(f"Mesh Size: {size.x}, {size.y}, {size.z}")
+            dims.append(max(size.x, size.y, size.z))
+        scale = sum(dims) / len(dims)
 
         blueprint_class = unreal.load_class(
             None, "/UnrealMCP/Widgets/BP_PCGScatter.BP_PCGScatter_C"
@@ -101,9 +110,11 @@ def register_pcg_tools(mcp: FastMCP):
 
         # --- Set exposed PCG variables ---
         actor.set_editor_property("PointDensity", points_per_sq_meter)
+        min_scale = min_scale / scale * 10.0
         actor.set_editor_property(
             "MinScale", unreal.Vector(min_scale, min_scale, min_scale)
         )
+        max_scale = max_scale / scale * 10.0
         actor.set_editor_property(
             "MaxScale", unreal.Vector(max_scale, max_scale, max_scale)
         )
