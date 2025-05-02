@@ -293,5 +293,3 @@ def register_blueprint_tools(mcp: FastMCP):
         unreal.log(f"Spawning blueprint actor with params: {params}")
         response = GameThreadRunner.run_cpp_command("spawn_blueprint_actor", params)
         return response or {}
-
-    unreal.log("Blueprint tools registered successfully")

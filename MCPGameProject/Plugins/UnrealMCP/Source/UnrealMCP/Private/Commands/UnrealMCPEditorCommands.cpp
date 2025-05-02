@@ -24,9 +24,9 @@ TSharedPtr<FJsonObject> FUnrealMCPEditorCommands::HandleCommand(const FString& C
     {
         return HandleFocusViewport(Params);
     }
-    else if (CommandType == TEXT("view_image"))
+    else if (CommandType == TEXT("view_asset"))
     {
-        return HandleViewImage(Params);
+        return HandleViewAsset(Params);
     }
     else if (CommandType == TEXT("take_screenshot"))
     {
@@ -86,34 +86,34 @@ TSharedPtr<FJsonObject> FUnrealMCPEditorCommands::HandleTakeScreenshot(const TSh
 } 
 
 
-TSharedPtr<FJsonObject> FUnrealMCPEditorCommands::HandleViewImage(const TSharedPtr<FJsonObject>& Params)
+TSharedPtr<FJsonObject> FUnrealMCPEditorCommands::HandleViewAsset(const TSharedPtr<FJsonObject>& Params)
 {
-    FString ImagePath;
-    if (!Params->TryGetStringField(TEXT("image_path"), ImagePath))
+    FString AssetPath;
+    if (!Params->TryGetStringField(TEXT("asset_path"), AssetPath))
     {
-        return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Missing 'image_path' parameter"));
+        return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Missing 'asset_path' parameter"));
     }
-    FSoftObjectPath SoftPath(ImagePath);
-    UE_LOG(LogTemp, Display, TEXT("Successfull FSoftObjectPath SoftPath(ImagePath"));
+    FSoftObjectPath SoftPath(AssetPath);
+    UE_LOG(LogTemp, Display, TEXT("Successfull FSoftObjectPath SoftPath(AssetPath"));
 
-    UObject* Image = SoftPath.TryLoad();
-    UE_LOG(LogTemp, Display, TEXT("Successfull UObject* Image = SoftPath.TryLoad()"));
+    UObject* Asset = SoftPath.TryLoad();
+    UE_LOG(LogTemp, Display, TEXT("Successfull UObject* Asset = SoftPath.TryLoad()"));
 
-    if (Image && GEditor)
+    if (Asset && GEditor)
     {
         if (UAssetEditorSubsystem* EditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>())
         {
             UE_LOG(LogTemp, Display, TEXT("Success UAssetEditorSubsystem* EditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem"));
             
-            EditorSubsystem->OpenEditorForAsset(ImagePath);
+            EditorSubsystem->OpenEditorForAsset(AssetPath);
         }
 
         UE_LOG(LogTemp, Display, TEXT("Big ol success"));
 
         TSharedPtr<FJsonObject> ResultObj = MakeShared<FJsonObject>();
-        ResultObj->SetBoolField(TEXT("image_viewed"), true);
+        ResultObj->SetBoolField(TEXT("asset_viewed"), true);
         return ResultObj;
     }
     
-    return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to view image"));
+    return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to view asset"));
 }

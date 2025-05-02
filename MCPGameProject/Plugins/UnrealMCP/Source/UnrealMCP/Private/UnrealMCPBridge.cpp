@@ -98,7 +98,7 @@ FString UUnrealMCPBridge::ExecuteCommand(const FString& CommandType, const TShar
         // Editor Commands
         else if (CommandType == TEXT("focus_viewport") || 
                     CommandType == TEXT("take_screenshot") ||
-                    CommandType == TEXT("view_image"))
+                    CommandType == TEXT("view_asset"))
         {
             ResultJson = EditorCommands->HandleCommand(CommandType, Params);
         }

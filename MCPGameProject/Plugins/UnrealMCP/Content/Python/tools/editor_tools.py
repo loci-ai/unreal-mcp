@@ -135,32 +135,28 @@ def register_editor_tools(mcp: FastMCP):
         return Responses.create_success_response({"import_dest_path": destination_path})
 
     @mcp.tool()
-    def view_image(ctx: Context, image_path: str) -> Dict[str, Any]:
+    def view_asset(ctx: Context, asset_path: str) -> Dict[str, Any]:
         """
-        View an Unreal texture image in a 2D image viewing window.
+        View an Unreal asset in the content browser window.
+        This can be a mesh, image, texture, material etc.
         Args:
-            image_path (str): The path to the image in the Unreal filesystem to view.
+            asset_path (str): The path to the asset in the Unreal filesystem to view.
+            If this is a local path, asset will be imported into Unreal first.
         Returns:
             Response from Unreal Engine
         """
+        if not asset_path.startswith(
+            ("Game", "/Game")
+        ):  # image has not been imported into UE yet
+            unreal.log("Importing asset into UE")
+            response = import_asset(ctx=ctx, asset_path=asset_path)
+            import_dest_path = response["import_dest_path"]
+            unreal.log(f"import_dest_path: {import_dest_path}")
+            filename = os.path.basename(import_dest_path).split(".")[0]
+            asset_path = f"{import_dest_path}/{filename}.{filename}"
 
-        try:
-            if not image_path.startswith(
-                ("Game", "/Game")
-            ):  # image has not been imported into UE yet
-                unreal.log(f"Importing image into UE")
-                response = import_asset(ctx=ctx, asset_path=image_path)
-                import_dest_path = response["import_dest_path"]
-                unreal.log(f"import_dest_path: {import_dest_path}")
-                filename = os.path.basename(import_dest_path).split(".")[0]
-                image_path = f"{import_dest_path}/{filename}.{filename}"
+        unreal.log(f"BIG UPS viewing asset: {asset_path}")
+        params = {"asset_path": asset_path}
 
-            unreal.log(f"BIG UPS viewing image: {image_path}")
-            params = {"image_path": image_path}
-
-            response = GameThreadRunner.run_cpp_command("view_image", params)
-            return response or {}
-
-        except Exception as e:
-            unreal.log(f"Error viewing image: {e}")
-            return {"status": "error", "message": str(e)}
+        response = GameThreadRunner.run_cpp_command("view_asset", params)
+        return response or {}

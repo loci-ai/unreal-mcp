@@ -292,5 +292,3 @@ def register_blueprint_node_tools(mcp: FastMCP):
         unreal.log(f"Finding nodes in blueprint '{blueprint_name}'")
         response = GameThreadRunner.run_cpp_command("find_blueprint_nodes", params)
         return response or {}
-
-    unreal.log("Blueprint node tools registered successfully")
