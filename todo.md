@@ -22,3 +22,5 @@
 [] Texture an asset
 
 --
+
+[] Organize all cubes into a folder in the outliner
