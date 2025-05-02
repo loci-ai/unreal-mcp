@@ -18,6 +18,16 @@ from .utils.responses import Responses
 def register_placement_tools(mcp: FastMCP):
     """Register placement tools with the MCP server."""
 
+    @GameThreadRunner.run_on_main_thread
+    def move_actor_pivot_to_bottom(actor, target_z=0.0, tolerance=1.0):
+        origin, extent = actor.get_actor_bounds(False)
+        current_loc = actor.get_actor_location()
+        unreal.log(
+            f"Origin: {(origin.x, origin.y, origin.z)}, Extent: {(extent.x, extent.y, extent.z)}"
+        )
+        new_loc = unreal.Vector(current_loc.x, current_loc.y, current_loc.z + extent.z)
+        actor.set_actor_location(new_loc, False, False)
+
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
     def place_actor(
@@ -115,6 +125,9 @@ def register_placement_tools(mcp: FastMCP):
             actor.static_mesh_component.set_static_mesh(mesh_asset)
         elif isinstance(actor, unreal.SkeletalMeshActor):
             actor.skeletal_mesh_component.set_skeletal_mesh(mesh_asset)
+
+        # Move the pivot to the bottom of the actor
+        move_actor_pivot_to_bottom(actor)
 
         return Responses.actor_to_json(actor)
 
@@ -234,6 +247,9 @@ def register_placement_tools(mcp: FastMCP):
                 actor.static_mesh_component.set_static_mesh(mesh_asset)
             elif isinstance(actor, unreal.SkeletalMeshActor):
                 actor.skeletal_mesh_component.set_skeletal_mesh(mesh_asset)
+
+            # Move the pivot to the bottom of the actor
+            move_actor_pivot_to_bottom(actor)
 
             placed_actors += 1
 
