@@ -183,6 +183,41 @@ def register_actor_tools(mcp: FastMCP):
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
+    def spawn_imported_static_mesh_actor(
+        ctx: Context,
+        asset_path: str,
+        name: str | None = None,
+        location=[0.0, 0.0, 0.0],
+        rotation=[0.0, 0.0, 0.0],
+        scale=[1.0, 1.0, 1.0],
+    ):
+        """Spawns an imported StaticMesh (e.g., from a GLB) into the level."""
+
+        # Load the StaticMesh
+        static_mesh = unreal.EditorAssetLibrary.load_asset(asset_path)
+        if not static_mesh:
+            raise RuntimeError(f"Static mesh not found at: {asset_path}")
+
+        # Spawn the actor
+        loc = unreal.Vector(*location)
+        rot = unreal.Rotator(*rotation)
+        actor = unreal.EditorLevelLibrary.spawn_actor_from_class(
+            unreal.StaticMeshActor, loc, rot
+        )
+
+        # Set mesh and transform
+        actor.static_mesh_component.set_static_mesh(static_mesh)
+        actor.set_actor_scale3d(unreal.Vector(*scale))
+
+        # Optionally rename
+        if name:
+            actor.set_actor_label(name)
+
+        unreal.log(f"Spawned {asset_path} into scene as {actor.get_actor_label()}")
+        return actor
+
+    @mcp.tool()
+    @GameThreadRunner.run_on_main_thread
     def get_all_static_mesh_actors_info() -> List[Dict[str, Any]]:
         """Returns detailed info about all StaticMeshActors in the current level, including bounding boxes."""
 

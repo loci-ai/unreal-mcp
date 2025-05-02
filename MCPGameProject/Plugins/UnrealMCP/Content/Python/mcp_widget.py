@@ -71,7 +71,8 @@ class MCPChatWidget:
         You also have access to a set of tools that can be used to perform various tasks in Unreal Engine.
 
         # Instructions
-        - After creating an actor, always focus the viewport on it.
+        - After creating a single static mesh actor, focus the viewport on it.
+        - After generating an image with AI, view the image.
         """
 
         self.mcp_server = create_mcp_server()

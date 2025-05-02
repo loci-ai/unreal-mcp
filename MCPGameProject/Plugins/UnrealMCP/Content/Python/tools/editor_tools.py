@@ -6,6 +6,7 @@ This module provides tools for controlling the Unreal Editor viewport and other 
 
 import unreal
 
+import os
 from typing import Dict, List, Any, Optional
 from mcp.server.fastmcp import FastMCP, Context
 
@@ -57,7 +58,7 @@ def register_editor_tools(mcp: FastMCP):
         ctx: Context, asset_path: str, asset_category: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Import an asset into Unreal Engine.
+        Import a GLB of FBX asset into Unreal Engine.
         Args:
             asset_path (str): The path to the asset to import.
             asset_category (str | None): Asset Category (can be anything eg. "Tree").
@@ -132,3 +133,30 @@ def register_editor_tools(mcp: FastMCP):
 
         editor_asset_subsystem.delete_directory(transient_path)
         return Responses.create_success_response({"import_dest_path": destination_path})
+
+    @mcp.tool()
+    @GameThreadRunner.run_on_main_thread
+    def view_image(ctx: Context, image_path: str):
+        if not image_path.startswith(
+            ("Game", "/Game")
+        ):  # image has not been imported into UE yet
+            unreal.log(f"Importing image into UE")
+            response = import_asset(ctx=ctx, asset_path=image_path)
+            import_dest_path = response["import_dest_path"]
+            unreal.log(f"import_dest_path: {import_dest_path}")
+            filename = os.path.basename(import_dest_path).split(".")[0]
+            image_path = f"{import_dest_path}/{filename}.{filename}"
+
+        asset = unreal.EditorAssetLibrary.load_asset(image_path)
+        if asset is None:
+            unreal.log_error(f"Failed to load asset at path: {image_path}")
+            return {"sucess": False, "error": "Asset not found"}
+
+        editor_subsystem = unreal.get_editor_subsystem(unreal.AssetEditorSubsystem)
+        if editor_subsystem:
+            editor_subsystem.open_editor_for_assets([asset])
+            unreal.log("Image viewed successfully.")
+            return {"sucess": True}
+
+        unreal.log_error("Could not get AssetEditorSubsystem")
+        return {"sucess": False, "error": "Editor subsystem unavailable"}
