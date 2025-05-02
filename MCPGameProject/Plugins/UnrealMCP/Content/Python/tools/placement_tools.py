@@ -19,7 +19,7 @@ def register_placement_tools(mcp: FastMCP):
     """Register placement tools with the MCP server."""
 
     @GameThreadRunner.run_on_main_thread
-    def move_actor_pivot_to_bottom(actor, target_z=0.0, tolerance=1.0):
+    def move_actor_pivot_to_bottom(actor):
         origin, extent = actor.get_actor_bounds(False)
         current_loc = actor.get_actor_location()
         unreal.log(
