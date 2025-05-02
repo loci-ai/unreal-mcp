@@ -61,7 +61,7 @@ def get_mongo_assets(key_uid: str, key_title: str, uids: list[str]) -> list[Asse
         return assets
 
     except Exception as e:
-        unreal.warning(f"Error filtering asset IDs in MongoDB: {e}")
+        unreal.log_warning(f"Error filtering asset IDs in MongoDB: {e}")
         return []
 
 

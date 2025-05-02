@@ -117,43 +117,59 @@ def register_actor_tools(mcp: FastMCP):
         base_octaves: int = 3,
         base_persistence: float = 0.4,
         base_lacunarity: float = 2.0,
-        plateau_scale: float = 120.0,
-        plateau_octaves: int = 4,
-        plateau_threshold: float = 0.6,
-        plateau_height: float = 0.8,
-        plateau_softness: float = 0.15,
-        plateau_flatness: float = 3.0,
-        plateau_top_variation: float = 0.05,
-        terracing_steps: int = 0,
         erosion_scale: float = 60.0,
         erosion_strength: float = 0.05,
-        enable_mesa: bool = False,
+        mountain_height_multiplier: float = 1.0,  # New parameter
         seed: int = 42,
     ):
         """Create a new terrain actor in the current level.
         Note: Does not delete existing terrain actors.
-        Args:
-            ctx: The MCP context
-            name: The name to give the new terrain actor (must be unique)
-            base_scale: Scale for the base terrain noise (higher = lower frequency)
-            base_octaves: Number of octaves for the base terrain noise
-            base_persistence: Persistence for the base terrain noise
-            base_lacunarity: Lacunarity for the base terrain noise
-            plateau_scale: Scale for the plateau noise (higher = lower frequency)
-            plateau_octaves: Number of octaves for the plateau noise
-            plateau_threshold: Threshold for plateau generation
-            plateau_height: Height of the plateaus
-            plateau_softness: Softness of the plateau edges
-            plateau_flatness: Flatness of the plateau tops
-            plateau_top_variation: Variation on the plateau tops
-            erosion_strength: Strength of the erosion effect
-            erosion_scale: Scale for the erosion noise (higher = lower frequency)
-            enable_mesa: True - big abrupt plateaus, False - plateaus blend into terrain
-            terracing_steps: Number of steps for terracing (0 disables terracing)
-            seed: Seed for the perlin noise generation
+
+        Generates a 2D procedural terrain heightmap using Perlin and Simplex noise.
+
+        This function produces terrain suitable for various biome types, such as mountains,
+        hills, or desert basins, depending on the input parameters. The terrain is composed
+        of a base layer of smooth or rugged elevation and optional micro-detail added via
+        erosion noise.
+
+        --------
+        Example usage:
+        - Mountainous terrain:
+            create_terrain(base_scale=100.0, base_octaves=5, mountain_height_multiplier=2.0)
+
+        - Rolling desert hills:
+            create_terrain(base_scale=400.0, base_octaves=2, erosion_strength=0.02)
+
+        Parameters
+        ----------
+        name : str
+            Name of the terrain actor to create.
+        base_scale : float
+            Controls the size of the base terrain features. Lower values zoom in (larger, sharper features),
+            higher values zoom out (smoother terrain).
+        base_octaves : int
+            Number of noise layers (octaves) used to build the base terrain.
+            More octaves add finer detail.
+        base_persistence : float
+            Controls how much each successive octave contributes to the overall shape.
+            Lower values (e.g., 0.3–0.4) create smoother terrain; higher values make it rougher.
+        base_lacunarity : float
+            Controls how quickly frequency increases per octave. Values >2 make terrain more jagged
+        erosion_scale : float
+            Scale of the additional erosion noise that breaks up uniformity.
+        erosion_strength : float
+            How strongly erosion noise influences the final terrain.
+            Small values (0.01–0.05) give subtle variation.
+        mountain_height_multiplier : float
+            Multiplies the base elevation to exaggerate peaks and valleys.
+            - Set to 1.0 for default elevation.
+            - Set to 2.0 or more for tall mountains.
+            - Use <1.0 for flatter terrain like deserts.
+        seed : int
+            Random seed for the noise used in terrain generation.
 
         Returns:
-            Dict containing the created actor's properties
+                Dict containing the created actor's properties
         """
 
         unreal.log("In create_terrain")
@@ -164,17 +180,9 @@ def register_actor_tools(mcp: FastMCP):
             base_octaves=base_octaves,
             base_persistence=base_persistence,
             base_lacunarity=base_lacunarity,
-            plateau_scale=plateau_scale,
-            plateau_octaves=plateau_octaves,
-            plateau_threshold=plateau_threshold,
-            plateau_height=plateau_height,
-            plateau_softness=plateau_softness,
-            plateau_flatness=plateau_flatness,
-            plateau_top_variation=plateau_top_variation,
-            terracing_steps=terracing_steps,
             erosion_scale=erosion_scale,
             erosion_strength=erosion_strength,
-            enable_mesa=enable_mesa,
+            mountain_height_multiplier=mountain_height_multiplier,
             seed=seed,
         )
 
