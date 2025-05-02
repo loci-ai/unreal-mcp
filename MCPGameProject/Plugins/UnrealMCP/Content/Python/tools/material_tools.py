@@ -2,6 +2,7 @@ import unreal
 from mcp.server.fastmcp import FastMCP, Context
 
 from runner import GameThreadRunner
+from typing import Any
 
 
 def register_material_tools(mcp: FastMCP):
@@ -9,26 +10,32 @@ def register_material_tools(mcp: FastMCP):
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
-    def get_all_material_paths() -> list[str]:
+    def get_all_assets_in_content_browser() -> dict[str, Any]:
         """
-        Retrieves all materials and material instances from the Content Browser.
+        Retrieves all assets (e.g meshes, materials etc) in the content browser.
 
         Returns:
-            List[str]: A list of full asset paths to materials and material instances.
+            dict[str, Any]: A dictionary containing the success status and info about the assets in the content browser.
         """
+
         asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
-
-        # Search for both Material and MaterialInstance assets
-        material_assets = asset_registry.get_assets_by_class("Material", True)
-        material_instance_assets = asset_registry.get_assets_by_class(
-            "MaterialInstanceConstant", True
+        assets = asset_registry.get_assets_by_path(
+            "/Game", recursive=True, include_only_on_disk_assets=False
         )
+        if not assets:
+            return {
+                "success": False,
+                "error": "No assets found in the content browser.",
+            }
+        asset_info = [
+            {
+                "path": str(asset.package_path) + "/" + str(asset.asset_name),
+                "class": str(asset.asset_class_path.asset_name),
+            }
+            for asset in assets
+        ]
 
-        all_assets = material_assets + material_instance_assets
-
-        # Extract full paths (e.g., "/Game/StarterContent/Materials/M_Metal_Gold")
-        material_paths = [asset.object_path.string() for asset in all_assets]
-        return material_paths
+        return {"success": True, "assets": asset_info}
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
@@ -48,20 +55,68 @@ def register_material_tools(mcp: FastMCP):
         """
         # Get the actor reference
         actor = unreal.EditorLevelLibrary.get_actor_reference(path_name)
-        actor = unreal.EditorLevelLibrary.get_actor_reference(path_name)
         if not actor:
             return {"success": False, "error": "Actor not found"}
 
         # Load the material asset
-        material = unreal.load_asset(material_path)
+        material = unreal.load_asset("/Game/Developers/jack/Collections/Metal")
         if not material:
             print(f"Material '{material_path}' could not be loaded.")
-            return
+            return {"success": False, "error": "Material not found"}
 
         # Get the static mesh component and assign the material
         mesh_component = actor.static_mesh_component
         mesh_component.set_material(material_slot_index, material)
 
-        print(
-            f"Material '{material.get_name()}' applied to '{path_name}' at slot {material_slot_index}."
+        return {
+            "success": True,
+            "message": f"Material '{material.get_name()}' applied to '{path_name}' at slot {material_slot_index}.",
+        }
+
+    @mcp.tool()
+    @GameThreadRunner.run_on_main_thread
+    def set_material_on_landscape(
+        landscape_name: str, material_path: str
+    ) -> dict[str, Any]:
+        """
+        Sets the material of a Landscape actor in the current level.
+
+        Args:
+            landscape_name (str): Name of the Landscape actor.
+            material_path (str): Full Unreal asset path to the material.
+
+        Returns:
+            dict[str, Any]: Status message.
+        """
+        # Find the Landscape actor
+        actors = unreal.EditorLevelLibrary.get_all_level_actors()
+        landscape = next(
+            (
+                a
+                for a in actors
+                if a.get_name() == landscape_name
+                and a.get_class().get_name() == "Landscape"
+            ),
+            None,
         )
+
+        if not landscape:
+            return {
+                "success": False,
+                "error": f"Landscape '{landscape_name}' not found in the level.",
+            }
+
+        # Load material
+        material = unreal.EditorAssetLibrary.load_asset(material_path)
+        if not material:
+            return {"success": False, "error": f"Material '{material_path}' not found."}
+
+        # Apply material
+        try:
+            landscape.set_editor_property("landscape_material", material)
+            return {
+                "success": True,
+                "message": f"Material '{material.get_name()}' applied to Landscape '{landscape_name}'.",
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}

@@ -12,9 +12,38 @@ from mcp.server.fastmcp import FastMCP, Context
 
 from runner import GameThreadRunner
 from .utils.terrain_generation import create_heightmap
+
 logger = logging.getLogger("UnrealMCP")
 
+
 def get_actor_info(actor: unreal.Actor) -> Dict[str, Any]:
+    """Get detailed info about an actor, including its location, rotation, scale, and bounding box."""
+    if isinstance(actor, unreal.StaticMeshActor):
+        return get_static_mesh_actor_info(actor)
+    else:
+        return {
+            "name": actor.get_name(),
+            "path_name": actor.get_path_name().split(":")[-1],
+            "label": actor.get_actor_label(),
+            "location": [
+                actor.get_actor_location().x,
+                actor.get_actor_location().y,
+                actor.get_actor_location().z,
+            ],
+            "rotation": [
+                actor.get_actor_rotation().pitch,
+                actor.get_actor_rotation().yaw,
+                actor.get_actor_rotation().roll,
+            ],
+            "scale": [
+                actor.get_actor_scale3d().x,
+                actor.get_actor_scale3d().y,
+                actor.get_actor_scale3d().z,
+            ],
+        }
+
+
+def get_static_mesh_actor_info(actor: unreal.Actor) -> Dict[str, Any]:
     mesh_component = actor.static_mesh_component
     mesh = mesh_component.get_editor_property("static_mesh")
 
@@ -56,8 +85,6 @@ def get_actor_info(actor: unreal.Actor) -> Dict[str, Any]:
     }
 
     return info
-
-
 
 
 def register_actor_tools(mcp: FastMCP):
@@ -115,7 +142,7 @@ def register_actor_tools(mcp: FastMCP):
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
-    def delete_object(
+    def delete_actor(
         ctx: Context,
         path_name: str,
     ) -> Dict[str, Any]:
@@ -142,15 +169,17 @@ def register_actor_tools(mcp: FastMCP):
             return {"success": False, "error": "Actor not found"}
 
         if location:
-            actor.set_actor_location(new_location=unreal.Vector(*location), sweep=False, teleport=True)
+            actor.set_actor_location(
+                new_location=unreal.Vector(*location), sweep=False, teleport=True
+            )
         if rotation:
-            actor.set_actor_rotation(new_rotation=unreal.Rotator(*rotation), teleport_physics=True)
+            actor.set_actor_rotation(
+                new_rotation=unreal.Rotator(*rotation), teleport_physics=True
+            )
         if scale:
             actor.set_actor_scale3d(unreal.Vector(*scale))
 
         return {"success": True, "actor_info": get_actor_info(actor)}
-
-
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
@@ -165,6 +194,19 @@ def register_actor_tools(mcp: FastMCP):
             if not isinstance(actor, unreal.StaticMeshActor):
                 continue
 
+            results.append(get_actor_info(actor))
+
+        return results
+
+    @mcp.tool()
+    @GameThreadRunner.run_on_main_thread
+    def get_all_actors_info() -> List[Dict[str, Any]]:
+        """Returns detailed info about all actors in the current level, including bounding boxes."""
+
+        actors = unreal.EditorActorSubsystem().get_all_level_actors()
+        results = []
+
+        for actor in actors:
             results.append(get_actor_info(actor))
 
         return results
