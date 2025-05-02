@@ -154,7 +154,6 @@ def register_editor_tools(mcp: FastMCP):
                 unreal.log(f"import_dest_path: {import_dest_path}")
                 filename = os.path.basename(import_dest_path).split(".")[0]
                 image_path = f"{import_dest_path}/{filename}.{filename}"
-          
 
             unreal.log(f"BIG UPS viewing image: {image_path}")
             params = {"image_path": image_path}

@@ -9,6 +9,7 @@ import requests
 import unreal
 from loci_utils import ASSET_DOWNLOADS_S3_BUCKET, LOCI_MASTER_API_KEY, S3_CLIENT
 from mcp.server.fastmcp import Context, FastMCP
+from .utils.responses import Responses
 
 
 def register_genai_tools(mcp: FastMCP):
@@ -28,43 +29,32 @@ def register_genai_tools(mcp: FastMCP):
             "file_path" is the local path to the generated image
         """
 
-        try:
-            tic = time()
-            headers = {
-                "accept": "application/json",
-                "x-api-key": LOCI_MASTER_API_KEY,
-            }
+        tic = time()
+        headers = {
+            "accept": "application/json",
+            "x-api-key": LOCI_MASTER_API_KEY,
+        }
 
-            # ------------------------------- text to image ------------------------------ #
-            text_to_image_url = "https://dev.loci-api.com/image/generate"
+        # ------------------------------- text to image ------------------------------ #
+        text_to_image_url = "https://dev.loci-api.com/image/generate"
 
-            data = {"prompt": text_prompt}
+        data = {"prompt": text_prompt}
 
-            image_response = requests.post(
-                text_to_image_url, headers=headers, data=data
-            )
-            image_response.raise_for_status()
-            image_contents_base64 = image_response.json()["contents_base64"]
-            unreal.log(f"Successully generated image from text prompt")
+        image_response = requests.post(text_to_image_url, headers=headers, data=data)
+        image_response.raise_for_status()
+        image_contents_base64 = image_response.json()["contents_base64"]
+        unreal.log("Successully generated image from text prompt")
 
-            temp_dir = tempfile.mkdtemp()
+        temp_dir = tempfile.mkdtemp()
 
-            local_path = f"{temp_dir}/ai_generated_image_{uuid4()}.png"  # type: ignore
+        local_path = f"{temp_dir}/ai_generated_image_{uuid4()}.png"  # type: ignore
 
-            with open(local_path, "wb") as f:
-                f.write(base64.b64decode(image_contents_base64))
+        with open(local_path, "wb") as f:
+            f.write(base64.b64decode(image_contents_base64))
 
-            unreal.log(
-                f"Generating an image from text prompt took {time()-tic} seconds"
-            )
+        unreal.log(f"Generating an image from text prompt took {time()-tic} seconds")
 
-            return {
-                "status": "success",
-                "message": "Image successfully generated",
-                "file_path": local_path,
-            }
-        except Exception as e:
-            return {"error": f"Failed to generate image from prompt: {str(e)}"}
+        return Responses.create_success_response(data={"file_path": local_path})
 
     @mcp.tool()
     def generate_asset_from_image(ctx: Context, image_path=None):
@@ -83,52 +73,82 @@ def register_genai_tools(mcp: FastMCP):
             "file_path" is the local path to the generated asset
         """
 
-        try:
-            tic = time()
-            headers = {
-                "accept": "application/json",
-                "x-api-key": LOCI_MASTER_API_KEY,
-            }
+        tic = time()
+        headers = {
+            "accept": "application/json",
+            "x-api-key": LOCI_MASTER_API_KEY,
+        }
 
-            # -------------------------------- image to 3D ------------------------------- #
-            image_to_3d_url = "https://dev.loci-api.com/3d/generate"
+        # -------------------------------- image to 3D ------------------------------- #
+        image_to_3d_url = "https://dev.loci-api.com/3d/generate"
 
-            files = {"file": open(file=image_path, mode="rb")}
+        files = {"file": open(file=image_path, mode="rb")}
 
-            data = {"model_name": "hunyuan", "generate_textures": True}
+        data = {"model_name": "hunyuan", "generate_textures": True}
 
-            asset_response = requests.post(
-                image_to_3d_url, headers=headers, data=data, files=files
-            )
-            asset_response.raise_for_status()
-            asset_presigned_url = asset_response.json()["presigned_url"]
-            unreal.log(f"Successully generated 3d asset from image")
+        asset_response = requests.post(
+            image_to_3d_url, headers=headers, data=data, files=files
+        )
+        asset_response.raise_for_status()
+        asset_presigned_url = asset_response.json()["presigned_url"]
+        unreal.log("Successully generated 3d asset from image")
 
-            temp_dir = tempfile.mkdtemp()
-            # Parse the S3 URI
-            try:
-                parsed = urlparse(asset_presigned_url)
-                s3_key = parsed.path.lstrip("/")
-                file_name = Path(s3_key).name
-                local_path = Path(temp_dir) / file_name
+        temp_dir = tempfile.mkdtemp()
 
-                # Download the file
-                S3_CLIENT.download_file(
-                    ASSET_DOWNLOADS_S3_BUCKET, s3_key, str(local_path)
-                )
-            except Exception as e:
-                return {"error": f"Failed to download model: {str(e)}"}
+        # Parse the S3 URI
+        parsed = urlparse(asset_presigned_url)
+        s3_key = parsed.path.lstrip("/")
+        file_name = Path(s3_key).name
+        local_path = Path(temp_dir) / file_name
 
-            unreal.log(
-                f"Generating a 3d asset from text prompt took {time()-tic} seconds. Asset saved to {local_path}"
-            )
+        # Download the file
+        S3_CLIENT.download_file(ASSET_DOWNLOADS_S3_BUCKET, s3_key, str(local_path))
 
-            return {
-                "status": "success",
-                "message": "Asset successfully generated",
-                "file_path": local_path,
-            }
-        except Exception as e:
-            return {"error": f"Failed to generate asset from prompt: {str(e)}"}
+        unreal.log(
+            f"Generating a 3d asset from text prompt took {time()-tic} seconds. Asset saved to {local_path}"
+        )
+
+        return Responses.create_success_response(data={"file_path": local_path})
+
+    @mcp.tool()
+    def retexture_asset_based_on_image(ctx: Context, asset_path=None, image_path=None):
+        """
+        Retexture a 3D model based on a reference image.
+        Args:
+            ctx: The MCP context
+            asset_path: The local path to the 3D GLB model.
+            image_path: The local path to the image.
+        """
+
+        tic = time()
+
+        url = "https://dev.loci-api.com/3d/texture"
+        headers = {
+            "x-api-key": LOCI_MASTER_API_KEY  # Make sure this variable is defined
+        }
+        files = {
+            "file": open(asset_path, "rb"),
+            "reference_image_file": open(image_path, "rb"),
+        }
+
+        response = requests.post(url, headers=headers, files=files)
+        response.raise_for_status()
+        asset_presigned_url = response.json()["presigned_url"]
+        unreal.log("Successully retextured asset based on image")
+        temp_dir = tempfile.mkdtemp()
+
+        # Parse the S3 URI
+        parsed = urlparse(asset_presigned_url)
+        s3_key = parsed.path.lstrip("/")
+        file_name = Path(s3_key).name
+        local_path = Path(temp_dir) / file_name
+
+        # Download the file
+        S3_CLIENT.download_file(ASSET_DOWNLOADS_S3_BUCKET, s3_key, str(local_path))
+
+        unreal.log(
+            f"Generating a 3d asset from text prompt took {time()-tic} seconds. Asset saved to {local_path}"
+        )
+        return Responses.create_success_response(data={"file_path": local_path})
 
     unreal.log("GenAI tools registered successfully")
