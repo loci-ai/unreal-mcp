@@ -179,5 +179,18 @@ def register_actor_tools(mcp: FastMCP):
         )
 
         params = {"heightmap_path": heightmap_path, "name": name}
+
+        @GameThreadRunner.run_on_main_thread
+        def delete_existing_terrain():
+            actors = unreal.EditorLevelLibrary.get_all_level_actors()
+
+            for actor in actors:
+                if isinstance(
+                    actor, (unreal.Landscape, unreal.LandscapeStreamingProxy)
+                ):
+                    unreal.EditorLevelLibrary.destroy_actor(actor)
+
+        delete_existing_terrain()
+
         response = GameThreadRunner.run_cpp_command("create_terrain", params)
         return response or {}

@@ -441,10 +441,19 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateTerrain(const TShar
     Landscape->StaticLightingLOD = FMath::DivideAndRoundUp(FMath::CeilLogTwo((SizeX * SizeY) / (2048 * 2048) + 1), (uint32)2);
     
     // Update landscape info
+    float ComponentSizeUU = QuadsPerComponent * 100.0f * Landscape->GetActorScale().X; // Assuming uniform scale
+    int32 WorldPartitionGridSize = FMath::RoundToInt(ComponentSizeUU);
+
     ULandscapeInfo* LandscapeInfo = Landscape->GetLandscapeInfo();
     if (LandscapeInfo)
     {
         LandscapeInfo->UpdateLayerInfoMap(Landscape);
+        // Setup World Partition streaming proxies (if applicable)
+        ULandscapeSubsystem* LandscapeSubsystem = World->GetSubsystem<ULandscapeSubsystem>();
+        if (LandscapeSubsystem && World->GetWorldPartition())
+        {
+            LandscapeSubsystem->ChangeGridSize(LandscapeInfo, WorldPartitionGridSize);
+        }
     }
 
     // Register components and finalize
@@ -454,13 +463,6 @@ TSharedPtr<FJsonObject> FUnrealMCPActorCommands::HandleCreateTerrain(const TShar
     FPropertyChangedEvent MaterialPropertyChangedEvent(FindFieldChecked<FProperty>(Landscape->GetClass(), FName("LandscapeMaterial")));
     Landscape->PostEditChangeProperty(MaterialPropertyChangedEvent);
     Landscape->PostEditChange();
-
-    // Check if landscape creation was successful
-    if (Landscape->GetLandscapeInfo() == nullptr || Landscape->LandscapeComponents.Num() == 0)
-    {
-        World->DestroyActor(Landscape);
-        return FUnrealMCPCommonUtils::CreateErrorResponse(TEXT("Failed to create landscape"));
-    }
 
     return FUnrealMCPCommonUtils::ActorToJsonObject(Landscape, true);
 
