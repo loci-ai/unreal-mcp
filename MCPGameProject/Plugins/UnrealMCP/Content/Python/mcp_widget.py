@@ -72,6 +72,7 @@ class MCPChatWidget:
 
         # Instructions
         - After creating a single static mesh actor, focus the viewport on it.
+        - When creating an image with AI for a texture, keep the prompt <120 characters, and make sure the image doesn't have a white background
         - After generating an image with AI for 3D creation, viewing the image of the asset first.
         - When placing static mesh actors, the location represents the center of the mesh, but you should adjust the location to place the mesh at the bottom.
         """
