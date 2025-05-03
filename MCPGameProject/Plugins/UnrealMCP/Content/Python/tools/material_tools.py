@@ -3,6 +3,7 @@ from mcp.server.fastmcp import FastMCP, Context
 import os
 from runner import GameThreadRunner
 from typing import Any
+from .editor_tools import import_file_if_required
 
 
 def register_material_tools(mcp: FastMCP):
@@ -91,12 +92,7 @@ def register_material_tools(mcp: FastMCP):
         # Find the Landscape actor
         actors = unreal.EditorLevelLibrary.get_all_level_actors()
         landscape = next(
-            (
-                a
-                for a in actors
-                if a.get_name() == landscape_name
-                and a.get_class().get_name() == "Landscape"
-            ),
+            (a for a in actors if a.get_class().get_name() == "Landscape"),
             None,
         )
 
@@ -145,6 +141,7 @@ def register_material_tools(mcp: FastMCP):
         # Create the full material asset path
         material_asset_path = os.path.join(material_path, material_name)
 
+        texture_image_path = import_file_if_required(texture_image_path)
         # Load the texture asset
         texture = unreal.EditorAssetLibrary.load_asset(texture_image_path)
         if not texture or not isinstance(texture, unreal.Texture2D):

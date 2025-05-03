@@ -29,7 +29,7 @@ def import_file_if_required(
     Returns:
         A dict with the imported Unreal asset path or an error.
     """
-    if file_path.startswith("/Game"):
+    if file_path.startswith("/Game") or file_path.startswith("/Engine"):
         return file_path
 
     if not os.path.isfile(file_path):

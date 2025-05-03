@@ -5,6 +5,8 @@ import unreal
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from urllib.parse import urlparse
+import cloudscraper
+
 
 from loci_utils import (
     MONGO_MASTER_ASSET_COLLECTION,
@@ -92,6 +94,12 @@ def register_fab_tools(mcp: FastMCP):
         }
 
         response = requests.get(url=FAB_SEARCH_URL, headers=headers, params=params)
+        if response.status_code != 200:
+            scraper = cloudscraper.create_scraper()
+            response = scraper.get(url=FAB_SEARCH_URL, headers=headers, params=params)
+
+            if response.status_code != 200:
+                return {"success": False, "error": f"FAB search failed {response.text}"}
         results = response.json()["results"]
         result_uids = [r["uid"] for r in results]
         assets = get_mongo_assets(

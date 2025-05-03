@@ -4,6 +4,7 @@ Python/unreal_mcp.log
 # data
 data/
 MCPGameProject/Plugins/UnrealMCP/Content/Data
+MCPGameProject/Content/ImportedAssets
 
 
 # AI-related files

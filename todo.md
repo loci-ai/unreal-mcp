@@ -47,7 +47,7 @@ Increase the gap between them
 Make the middle one green instead!
 
 
-# Now pull in a few other monsters from fab
+Now pull in a few other monsters from fab
 
 
 
