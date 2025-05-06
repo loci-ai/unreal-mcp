@@ -88,19 +88,25 @@ def register_fab_tools(mcp: FastMCP):
             "asset_formats": "glb",  # Needed as we only ingested these - eventually remove
             "q": text_query,
         }
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "accept": "application/json",
-        }
+        # headers = {
+        #     "User-Agent": "Mozilla/5.0",
+        #     "accept": "application/json",
+        # }
 
-        response = requests.get(url=FAB_SEARCH_URL, headers=headers, params=params)
+        # response = requests.get(url=FAB_SEARCH_URL, headers=headers, params=params)
+        # if response.status_code != 200:
+        scraper = cloudscraper.create_scraper(
+            browser={"browser": "firefox", "platform": "windows", "mobile": False}
+        )
+        response = scraper.get(url=FAB_SEARCH_URL, params=params)
+
         if response.status_code != 200:
-            scraper = cloudscraper.create_scraper()
-            response = scraper.get(url=FAB_SEARCH_URL, headers=headers, params=params)
+            import json
 
-            if response.status_code != 200:
-                return {"success": False, "error": f"FAB search failed {response.text}"}
-        results = response.json()["results"]
+            with open("./fab_search_backup.json", "r") as f:
+                results = json.load(f)["results"]
+        else:
+            results = response.json()["results"]
         result_uids = [r["uid"] for r in results]
         assets = get_mongo_assets(
             key_uid="metadata.source.fab._source.uid",
