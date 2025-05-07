@@ -90,8 +90,62 @@ def get_static_mesh_actor_info(actor: unreal.Actor) -> Dict[str, Any]:
     return info
 
 
+def import_and_spawn_glb_to_actor(
+    glb_path: str, destination_path: str = "/Game/Imported"
+) -> bool:
+    """
+    Imports a GLB file into Unreal as a StaticMesh asset.
+
+    Args:
+        glb_path (str): Absolute path to the .glb file.
+        destination_path (str): Unreal content browser path to import to (default: "/Game/Imported").
+
+    Returns:
+        str: Returns true if import was successful.
+    """
+    source_data = unreal.InterchangeManager.create_source_data(glb_path)
+
+    current_level = unreal.LevelEditorSubsystem().get_current_level()
+
+    import_asset_parameters = unreal.ImportAssetParameters(
+        is_automated=True,  # Run without UI
+        import_level=current_level,  # Specify which level to import into
+        replace_existing=True,  # Replace existing assets if needed
+        destination_name=unreal.Paths.get_base_filename(
+            glb_path
+        ),  # Use filename as base name
+    )
+
+    # Get the GLB-specific pipeline
+    interchange_manager = unreal.InterchangeManager.get_interchange_manager_scripted()
+    success = interchange_manager.import_scene(
+        destination_path, source_data, import_asset_parameters
+    )
+
+    return success
+
+
 def register_actor_tools(mcp: FastMCP):
     """Register actor tools with the MCP server."""
+
+    @mcp.tool()
+    @GameThreadRunner.run_on_main_thread
+    def import_and_spawn_glb(
+        ctx: Context,
+        glb_path: str,
+        destination_path: str = "/Game/Imported",
+        name: str | None = None,
+        location: List[float] = [0.0, 0.0, 0.0],
+        rotation: List[float] = [0.0, 0.0, 0.0],
+        scale: List[float] = [1.0, 1.0, 1.0],
+    ) -> Dict[str, Any]:
+        """Imports a GLB file and spawns it as a StaticMeshActor.
+        Use this instead of spawn_static_mesh_actor for .GLB files.
+        """
+        success = import_and_spawn_glb_to_actor(
+            glb_path=glb_path, destination_path=destination_path
+        )
+        return {"success": success}
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
@@ -106,7 +160,7 @@ def register_actor_tools(mcp: FastMCP):
         """Creates a StaticMeshActor using a built-in primitive shape.
 
         Args:
-            asset_path (str): The path to the static mesh asset. The path can either be a path to a primative shape ("/Engine/BasicShapes/Cube", "/Engine/BasicShapes/Sphere", "/Engine/BasicShapes/Cone", "/Engine/BasicShapes/Cylinder", "/Engine/BasicShapes/Plane") or the path to a GLB mesh.
+            asset_path (str): The path to the static mesh asset. The path can either be a path to a primative shape ("/Engine/BasicShapes/Cube", "/Engine/BasicShapes/Sphere", "/Engine/BasicShapes/Cone", "/Engine/BasicShapes/Cylinder", "/Engine/BasicShapes/Plane") or the path to a Staitc Mesh Actor.
             name (str | None): Optional name for the actor.
             location (List[float]): The location to spawn the actor at.
             rotation (List[float]): The rotation of the actor. The Rotation is specified as pitch (around Y axis), roll (around X axis), yaw (around Z axis) in degrees.

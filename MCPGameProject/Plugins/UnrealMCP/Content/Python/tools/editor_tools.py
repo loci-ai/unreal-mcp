@@ -48,51 +48,7 @@ def import_file_if_required(
     # Ensure destination path ends with a slash
     if not destination_root.endswith("/"):
         destination_root = destination_root + "/"
-    if is_glb:
-
-        # Get asset name from file path
-
-        import_task = unreal.AssetImportTask()
-        import_task.filename = file_path
-        import_task.destination_path = destination_root
-        import_task.destination_name = asset_name
-        import_task.replace_existing = True
-        import_task.automated = True
-        import_task.save = True
-
-        # Import the asset using the asset tools
-        asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
-        asset_tools.import_asset_tasks([import_task])
-
-        # Get the imported object paths
-        imported_paths = import_task.get_editor_property("imported_object_paths")
-
-        # Check if import was successful
-        if not imported_paths:
-            unreal.log_error(f"Failed to import GLB file: {file_path}")
-            return None
-
-        # Find the static mesh in the imported objects
-        static_mesh_path = None
-        editor_asset_subsystem = unreal.get_editor_subsystem(
-            unreal.EditorAssetSubsystem
-        )
-
-        for path in imported_paths:
-            asset = editor_asset_subsystem.load_asset(path)
-            if isinstance(asset, unreal.StaticMesh):
-                static_mesh_path = path
-                break
-
-        if not static_mesh_path:
-            unreal.log_warning(
-                f"No static mesh was found in the imported assets. Paths: {imported_paths}"
-            )
-            # Return the first path if no specific static mesh was found
-            return imported_paths[0] if imported_paths else None
-
-        return static_mesh_path
-    elif is_image:
+    if is_glb or is_image:
         # Use AssetImportTask for images
         task = unreal.AssetImportTask()
         task.filename = file_path
