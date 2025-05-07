@@ -17,7 +17,7 @@ def register_pcg_tools(mcp: FastMCP):
         asset_path: str,
         actor_name: str,
         actor_location: list[float] = [504.0, 504.0],
-        actor_box_extents: list[float] = [504.0, 504.0],
+        actor_box_extents: list[float] = [504.0 * 10, 504.0 * 10],
         points_per_sq_meter: float = 10.0,
         min_scale: float = 0.8,
         max_scale: float = 1.2,
@@ -106,16 +106,16 @@ def register_pcg_tools(mcp: FastMCP):
         box_component = actor.get_component_by_class(unreal.BoxComponent)
         assert box_component is not None, "BoxComponent not found in actor."
         box_component.set_box_extent(
-            unreal.Vector(actor_box_extents[0], actor_box_extents[1], 504)
+            unreal.Vector(actor_box_extents[0], actor_box_extents[1], 504 * 10)
         )
 
         # --- Set exposed PCG variables ---
         actor.set_editor_property("PointDensity", points_per_sq_meter)
-        min_scale = min_scale / scale * 10.0
+        min_scale = min_scale / scale * 100.0
         actor.set_editor_property(
             "MinScale", unreal.Vector(min_scale, min_scale, min_scale)
         )
-        max_scale = max_scale / scale * 10.0
+        max_scale = max_scale / scale * 100.0
         actor.set_editor_property(
             "MaxScale", unreal.Vector(max_scale, max_scale, max_scale)
         )
