@@ -10,11 +10,12 @@ from .editor_tools import (
 )
 import unreal
 
+
 from typing import Dict, List, Any, Literal
 from mcp.server.fastmcp import FastMCP, Context
 
 from runner import GameThreadRunner
-from .utils.terrain_generation import create_heightmap
+from .utils.responses import Responses
 
 logger = logging.getLogger("UnrealMCP")
 
@@ -91,7 +92,9 @@ def get_static_mesh_actor_info(actor: unreal.Actor) -> Dict[str, Any]:
 
 
 def import_and_spawn_glb_to_actor(
-    glb_path: str, destination_path: str = "/Game/Imported"
+    glb_path: str,
+    destination_path: str = "/Game/Imported",
+    actor_name: str = "ImportedActor",
 ) -> bool:
     """
     Imports a GLB file into Unreal as a StaticMesh asset.
@@ -99,6 +102,7 @@ def import_and_spawn_glb_to_actor(
     Args:
         glb_path (str): Absolute path to the .glb file.
         destination_path (str): Unreal content browser path to import to (default: "/Game/Imported").
+        actor_name (str): Name of the actor to spawn (default: "ImportedActor").
 
     Returns:
         str: Returns true if import was successful.
@@ -118,11 +122,57 @@ def import_and_spawn_glb_to_actor(
 
     # Get the GLB-specific pipeline
     interchange_manager = unreal.InterchangeManager.get_interchange_manager_scripted()
+
+    all_actors_names_before_import = [
+        x.get_name() for x in unreal.EditorActorSubsystem().get_all_level_actors()
+    ]
+
     success = interchange_manager.import_scene(
         destination_path, source_data, import_asset_parameters
     )
 
-    return success
+    # Find all matching StaticMeshActors in the scene
+    actors_to_merge = []
+    all_actors = unreal.EditorActorSubsystem().get_all_level_actors()
+
+    for actor in all_actors:
+        if (
+            isinstance(actor, unreal.StaticMeshActor)
+            and actor.get_name() not in all_actors_names_before_import
+        ):
+            actors_to_merge.append(actor)
+
+    if not actors_to_merge:
+        print("No matching StaticMeshActors found in the scene.")
+        return Responses.create_error_response(
+            "No matching StaticMeshActors found in the scene."
+        )
+
+    meshMergeOptions = unreal.MergeStaticMeshActorsOptions(
+        destroy_source_actors=True,
+        new_actor_label=actor_name,
+        rename_components_from_source=True,
+        spawn_merged_actor=True,
+        base_package_name=destination_path,
+    )
+
+    static_mesh_editor_subsystem = unreal.get_editor_subsystem(
+        unreal.StaticMeshEditorSubsystem
+    )
+
+    merged_actor = static_mesh_editor_subsystem.merge_static_mesh_actors(
+        actors_to_merge, meshMergeOptions
+    )
+
+    if not merged_actor:
+        print("Failed to merge static meshes.")
+        return Responses.create_error_response("Failed to merge static meshes.")
+
+    for actor in all_actors:
+        if actor.get_name() not in all_actors_names_before_import:
+            unreal.EditorLevelLibrary.destroy_actor(actor)
+
+    return {"success": success, "actor_info": get_actor_info(merged_actor)}
 
 
 def register_actor_tools(mcp: FastMCP):
@@ -142,10 +192,9 @@ def register_actor_tools(mcp: FastMCP):
         """Imports a GLB file and spawns it as a StaticMeshActor.
         Use this instead of spawn_static_mesh_actor for .GLB files.
         """
-        success = import_and_spawn_glb_to_actor(
+        return import_and_spawn_glb_to_actor(
             glb_path=glb_path, destination_path=destination_path
         )
-        return {"success": success}
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
