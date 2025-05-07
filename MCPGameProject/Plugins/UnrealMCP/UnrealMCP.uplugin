@@ -1,0 +1,63 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "UnrealMCP",
+	"Description": "Model Context Protocol implementation for Unreal Engine",
+	"Category": "Editor",
+	"CreatedBy": "Your Name",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Content": true,
+	"Modules": [
+		{
+			"Name": "UnrealMCP",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64",
+				"Mac",
+				"Linux"
+			],
+        "bCanHotReload": true
+		},
+	],
+	"Plugins": [
+		{
+			"Name": "EditorScriptingUtilities",
+			"Enabled": true
+		},
+		{
+			"Name": "Interchange",
+			"Enabled": true
+		},
+		{
+			"Name": "PythonScriptPlugin",
+			"Enabled": true
+		}
+	],
+	"PythonRequirements": [
+		{
+			"Platform": "All",
+			"Requirements": [
+				"markdown2==2.5.3",
+				"emoji==2.14.1",
+				"typing-extensions==4.12.2",
+				"openai==1.74.0",
+				"openai-agents==0.0.11",
+				"beautifulsoup4==4.12.3",
+				"boto3==1.38.5",
+				"aiohttp",
+				"certifi",
+				"pymongo",
+                "cloudscraper"
+			]
+		}
+	]
+} 
