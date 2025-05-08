@@ -85,6 +85,8 @@ class MCPChatWidget:
           If the cube is not placed correctly, move it up by half its height. 
           If the cube is placed correctly, do nothing.
         - When spawning static mesh actors or after importing glbs ALWAYS check its bounding box to make sure it is placed on the ground
+
+        # If you cant do something, say you can't do it, and guide the user on how to do it manually in Unreal Engine Editor
         """
 
         self.mcp_server = create_mcp_server()
