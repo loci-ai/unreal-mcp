@@ -1,29 +1,7 @@
-[] Create; Delete; Mofiy Static mesh actors
 
-[] Set camera position, focus viewport.
-
-[] Create lighting
-
-[] Apply simple textures/materials to meshes
-
-[] Hook up PCG graph
+[] fix glb import
 
 
---
-
-[] Download assets from fab into the content drawer
-
-[] Use semantic search on
-
-[] Connect with GenAI tools for asset creation
-
---
-
-[] Texture an asset
-
---
-
-[] Organize all cubes into a folder in the outliner
 
 
 # Script
@@ -44,13 +22,14 @@ Generate a cute 3D puple monster with 3 eyes
 Duplicate 5 times with variation in scale
 Increase the gap between them
 
-Make the middle one green instead!
+
 
 
 Now pull in a few other monsters from fab
 
 
-Get 5 nordic mossy rocks using Loci Semantic Search
+import some mossy rocks and an oak tree
+duplicate the mossy rocks 5 times, and make them proportional to each other. Place the rocks around the tree
 ------
 # What is in my scene?
 

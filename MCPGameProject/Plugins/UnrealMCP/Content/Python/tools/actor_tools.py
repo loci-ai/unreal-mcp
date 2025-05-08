@@ -9,7 +9,7 @@ from .editor_tools import (
     import_file_if_required,
 )
 import unreal
-
+from os.path import join
 
 from typing import Dict, List, Any, Literal
 from mcp.server.fastmcp import FastMCP, Context
@@ -93,16 +93,16 @@ def get_static_mesh_actor_info(actor: unreal.Actor) -> Dict[str, Any]:
 
 def import_and_spawn_glb_to_actor(
     glb_path: str,
-    destination_path: str = "/Game/Imported",
-    actor_name: str = "ImportedActor",
-) -> bool:
+    actor_name: str,
+    destination_path: str = "/Game/ImportedAssets",
+) -> unreal.StaticMeshActor:
     """
     Imports a GLB file into Unreal as a StaticMesh asset.
 
     Args:
         glb_path (str): Absolute path to the .glb file.
-        destination_path (str): Unreal content browser path to import to (default: "/Game/Imported").
-        actor_name (str): Name of the actor to spawn (default: "ImportedActor").
+        actor_name (str): Name of the actor to spawn. Always give a meaningful name to the actor (e.g Tree_01).
+        destination_path (str): Unreal content browser path to import to (default: "/Game/ImportedAssets").
 
     Returns:
         str: Returns true if import was successful.
@@ -131,6 +131,10 @@ def import_and_spawn_glb_to_actor(
         destination_path, source_data, import_asset_parameters
     )
 
+    if not success:
+        print("Failed to import GLB file.")
+        return Responses.create_error_response("Failed to import GLB file.")
+
     # Find all matching StaticMeshActors in the scene
     actors_to_merge = []
     all_actors = unreal.EditorActorSubsystem().get_all_level_actors()
@@ -153,7 +157,9 @@ def import_and_spawn_glb_to_actor(
         new_actor_label=actor_name,
         rename_components_from_source=True,
         spawn_merged_actor=True,
-        base_package_name=destination_path,
+        base_package_name=join(
+            destination_path, unreal.Paths.get_base_filename(glb_path)
+        ),
     )
 
     static_mesh_editor_subsystem = unreal.get_editor_subsystem(
@@ -172,19 +178,63 @@ def import_and_spawn_glb_to_actor(
         if actor.get_name() not in all_actors_names_before_import:
             unreal.EditorLevelLibrary.destroy_actor(actor)
 
-    return {"success": success, "actor_info": get_actor_info(merged_actor)}
+    return merged_actor
 
 
 def register_actor_tools(mcp: FastMCP):
     """Register actor tools with the MCP server."""
+
+    # @mcp.tool()
+    # @GameThreadRunner.run_on_main_thread
+    # def move_actor_pivot_to_bottom(path_name: str):
+    #     """Move the pivot of the actor to the bottom of the mesh.
+
+    #     Args:
+    #         path_name: The path of the actor to move the pivot of.
+    #     """
+    #     # Get the actor reference
+    #     actor = unreal.EditorLevelLibrary.get_actor_reference(path_name)
+    #     if not actor:
+    #         return {"success": False, "error": f"Actor not found: {path_name}"}
+
+    #     # Ensure it's a StaticMeshActor
+    #     if not isinstance(actor, unreal.StaticMeshActor):
+    #         return {
+    #             "success": False,
+    #             "error": f"Actor is not a StaticMeshActor: {path_name}",
+    #         }
+
+    #     # Get the static mesh component
+    #     static_mesh_component = actor.static_mesh_component
+    #     if not static_mesh_component:
+    #         return {
+    #             "success": False,
+    #             "error": f"No static mesh component found for actor: {path_name}",
+    #         }
+
+    #     # Get bounds in local space to avoid issues with world transforms
+    #     origin, extent = static_mesh_component.get_local_bounds()
+    #     unreal.log(f"Local Origin: {origin}, Local Extent: {extent}")
+
+    #     # Calculate the new location to place the pivot at the bottom
+    #     current_location = actor.get_actor_location()
+    #     new_location = current_location + unreal.Vector(0, 0, extent.z)
+    #     actor.set_actor_location(new_location, False, False)
+
+    #     # Log and return success
+    #     unreal.log(f"Moved pivot of {path_name} to bottom: {new_location}")
+    #     return {
+    #         "success": True,
+    #         "message": f"Moved pivot of {path_name} to bottom: {new_location}",
+    #     }
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
     def import_and_spawn_glb(
         ctx: Context,
         glb_path: str,
+        name: str,
         destination_path: str = "/Game/Imported",
-        name: str | None = None,
         location: List[float] = [0.0, 0.0, 0.0],
         rotation: List[float] = [0.0, 0.0, 0.0],
         scale: List[float] = [1.0, 1.0, 1.0],
@@ -192,9 +242,26 @@ def register_actor_tools(mcp: FastMCP):
         """Imports a GLB file and spawns it as a StaticMeshActor.
         Use this instead of spawn_static_mesh_actor for .GLB files.
         """
-        return import_and_spawn_glb_to_actor(
-            glb_path=glb_path, destination_path=destination_path
+        merged_actor = import_and_spawn_glb_to_actor(
+            actor_name=name, glb_path=glb_path, destination_path=destination_path
         )
+        if not merged_actor:
+            return Responses.create_error_response(
+                "Failed to import and spawn GLB file."
+            )
+        # Set transform
+
+        merged_actor.set_actor_location(
+            new_location=unreal.Vector(*location), sweep=False, teleport=True
+        )
+
+        merged_actor.set_actor_rotation(
+            new_rotation=unreal.Rotator(*rotation), teleport_physics=True
+        )
+
+        merged_actor.set_actor_scale3d(unreal.Vector(*scale))
+
+        return Responses.create_success_response(get_actor_info(merged_actor))
 
     @mcp.tool()
     @GameThreadRunner.run_on_main_thread
@@ -310,3 +377,16 @@ def register_actor_tools(mcp: FastMCP):
             results.append(get_actor_info(actor))
 
         return results
+
+    @mcp.tool()
+    @GameThreadRunner.run_on_main_thread
+    def get_actor_info_by_path_name(
+        ctx: Context,
+        path_name: str,
+    ) -> Dict[str, Any]:
+        """Returns detailed info about an actor by its path name."""
+        actor = unreal.EditorLevelLibrary.get_actor_reference(path_name)
+        if not actor:
+            return {"success": False, "error": "Actor not found"}
+
+        return {"success": True, "actor_info": get_actor_info(actor)}
