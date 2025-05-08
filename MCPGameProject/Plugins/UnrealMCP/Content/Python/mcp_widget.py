@@ -74,10 +74,17 @@ class MCPChatWidget:
         - After creating a single static mesh actor, focus the viewport on it.
         - When creating an image with AI for a texture, keep the prompt <120 characters, and make sure the image doesn't have a white background
         - After generating an image with AI for 3D creation, viewing the image of the asset first.
-        - When spawning static mesh actors or after importing glbs ALWAYS check its bounding box to make sure it is placed on the ground (ie. the bottom of the new bounding box has z=0). After doing this, check the bounding box of the new static mesh actor to make sure it is placed correctly.
         - If creating a 3D asset with GenAI doesn't work first time, try again with generate_textures=False
         - If asked to import trees or rocks, use LOCI search rather than FAB
         - When placing multiple assets in the scene, make sure they are not overlapping
+
+        # Spawning a Static Mesh Actor / GLB File:
+        - When spawning static mesh actors or after importing glbs ALWAYS check its bounding box to make sure it is 
+          placed on the ground (ie. the bottom of the new bounding box has z=0). After doing this, check the bounding box of the new static mesh actor to make sure it is placed correctly.
+          For example, if you place a cube at location (0,0,0), it will clip into the ground, as 0,0,0 is the center of the cube.
+          If the cube is not placed correctly, move it up by half its height. 
+          If the cube is placed correctly, do nothing.
+        - When spawning static mesh actors or after importing glbs ALWAYS check its bounding box to make sure it is placed on the ground
         """
 
         self.mcp_server = create_mcp_server()
